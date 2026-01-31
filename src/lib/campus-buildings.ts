@@ -183,7 +183,7 @@ export const CAMPUS_BUILDINGS: CampusBuilding[] = [
     id: "pritchard",
     name: "Pritchard Hall",
     aliases: ["Pritchard"],
-    coordinates: [-80.4253, 37.2260],
+    coordinates: [-80.4200, 37.2242],
     category: "Residence Hall",
     address: "630 Washington St. SW, Blacksburg, VA 24061",
   },
