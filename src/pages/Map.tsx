@@ -116,9 +116,9 @@ const Map = () => {
     if (!selectedDestination) return;
     
     const origin = effectiveLocation || [-80.4139, 37.2296]; // Default to Blacksburg center
-    const profile = mode === "walk" ? "foot" : "bike";
     
-    const result = await calculateRoute(origin, selectedDestination.coordinates, profile);
+    // Walking-only routing
+    const result = await calculateRoute(origin, selectedDestination.coordinates);
     
     if (result) {
       toast.success(`Route found: ${formatDistance(result.distance)} • ${formatDuration(result.duration)}`);

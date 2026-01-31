@@ -14,10 +14,8 @@ export interface CalculatedRoute {
   steps: RouteStep[];
 }
 
-type RoutingProfile = "foot" | "bike" | "car";
-
 /**
- * Hook for calculating pedestrian-optimized routes using OSRM
+ * Hook for calculating pedestrian-only routes using OSRM
  * Uses OpenStreetMap data with foot profile for accurate walking paths
  */
 export const useRouting = () => {
@@ -28,25 +26,15 @@ export const useRouting = () => {
   const calculateRoute = useCallback(
     async (
       origin: [number, number], // [lng, lat]
-      destination: [number, number], // [lng, lat]
-      profile: RoutingProfile = "foot"
+      destination: [number, number] // [lng, lat]
     ): Promise<CalculatedRoute | null> => {
       setLoading(true);
       setError(null);
 
       try {
-        // Map profile to OSRM service
-        // foot = walking (uses footways, sidewalks, paths)
-        // bike = cycling (uses bike paths, roads)
-        // car = driving (uses roads only)
-        const osrmProfile = profile === "bike" ? "bike" : profile === "car" ? "car" : "foot";
-        
-        // OSRM Demo server - uses OpenStreetMap data
-        // The "foot" profile routes via:
-        // - footways, sidewalks, pedestrian paths
-        // - campus paths, shortcuts
-        // - avoids vehicle-only roads
-        const url = `https://router.project-osrm.org/route/v1/${osrmProfile}/${origin[0]},${origin[1]};${destination[0]},${destination[1]}?overview=full&geometries=geojson&steps=true&annotations=true`;
+        // Use OSRM Routing Machine with foot profile via routing.openstreetmap.de
+        // This server specifically supports walking routes
+        const url = `https://routing.openstreetmap.de/routed-foot/route/v1/walking/${origin[0]},${origin[1]};${destination[0]},${destination[1]}?overview=full&geometries=geojson&steps=true`;
 
         const response = await fetch(url);
         const data = await response.json();
@@ -102,7 +90,6 @@ function formatPedestrianManeuver(step: any): string {
   const modifier = step.maneuver?.modifier || "";
   const name = step.name || "";
 
-  // Add context about the path type if available
   const pathPrefix = name ? `on ${name}` : "";
 
   switch (type) {
