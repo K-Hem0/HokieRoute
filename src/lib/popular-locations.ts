@@ -26,9 +26,10 @@ export const POPULAR_LOCATIONS: QuickLocation[] = [
   { id: "glc", name: "Graduate Life Center", keywords: ["glc", "graduate", "grad life"], address: "155 Otey St. NW", coordinates: [-80.4167, 37.2273] },
   
   // Dining
-  { id: "owens", name: "Owens Dining Hall", keywords: ["owens", "dining", "food court"], address: "100 Kent St.", coordinates: [-80.4161, 37.2252] },
-  { id: "d2", name: "Dietrick Hall (D2)", keywords: ["d2", "dietrick"], address: "135 Kent St.", coordinates: [-80.4237, 37.2248] },
-  { id: "westend", name: "West End Market", keywords: ["west end", "wem"], address: "155 Turner St.", coordinates: [-80.4257, 37.2269] },
+  // Sources: vt.edu building pages / campus services listings
+  { id: "owens", name: "Owens Dining Hall", keywords: ["owens", "dining", "food court"], address: "150 Kent St.", coordinates: [-80.4161, 37.2252] },
+  { id: "d2", name: "Dietrick Hall (D2)", keywords: ["d2", "dietrick"], address: "285 Ag Quad Ln.", coordinates: [-80.4237, 37.2248] },
+  { id: "westend", name: "West End Market", keywords: ["west end", "wem"], address: "Cochrane Hall, 770 Washington St SW", coordinates: [-80.4257, 37.2269] },
   
   // Residence Halls
   { id: "pritchard", name: "Pritchard Hall", keywords: ["pritchard"], address: "630 Washington St. SW", coordinates: [-80.4200, 37.2242] },
@@ -41,7 +42,7 @@ export const POPULAR_LOCATIONS: QuickLocation[] = [
   // Athletics & Recreation
   { id: "lane", name: "Lane Stadium", keywords: ["lane", "stadium", "football"], address: "285 Beamer Way", coordinates: [-80.4182, 37.2199] },
   { id: "cassell", name: "Cassell Coliseum", keywords: ["cassell", "coliseum", "basketball"], address: "675 Washington St. SW", coordinates: [-80.4172, 37.2208] },
-  { id: "mccomas", name: "McComas Hall", keywords: ["mccomas", "rec", "gym"], address: "595 Washington St. SW", coordinates: [-80.4136, 37.2227] },
+  { id: "mccomas", name: "McComas Hall", keywords: ["mccomas", "rec", "gym"], address: "895 Washington St SW", coordinates: [-80.4136, 37.2227] },
   
   // Landmarks
   { id: "drillfield", name: "Drillfield", keywords: ["drillfield", "drill field"], address: "Drillfield Drive", coordinates: [-80.4219, 37.2281] },
