@@ -118,7 +118,7 @@ const Landing = () => {
                   rx="25"
                   ry="15"
                   fill="none"
-                  stroke="hsl(var(--primary))"
+                  stroke={isDark ? "hsl(263 70% 45%)" : "hsl(var(--primary))"}
                   strokeWidth="2"
                   strokeLinecap="round"
                   className="animate-pulse"
@@ -126,7 +126,7 @@ const Landing = () => {
                 {/* Start point */}
                 <circle cx="25" cy="50" r="3" fill="hsl(var(--safe))" />
                 {/* End point */}
-                <circle cx="75" cy="50" r="3" fill="hsl(var(--primary))" />
+                <circle cx="75" cy="50" r="3" fill={isDark ? "hsl(263 70% 45%)" : "hsl(var(--primary))"} />
               </svg>
             </div>
             
