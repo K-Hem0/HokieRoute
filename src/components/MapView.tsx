@@ -3,8 +3,8 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Route } from "@/lib/mock-data";
 
-// Public Mapbox token - this is a publishable key
-const MAPBOX_TOKEN = "pk.eyJ1IjoibG92YWJsZS1kZW1vIiwiYSI6ImNtYmhxcW44cjA0cGYyanNkYjQ3cTNrcWMifQ.to60WE2Ma41bIrlxUJcIQQ";
+// Use environment variable for Mapbox token
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
 // Blacksburg, VA center
 const BLACKSBURG_CENTER: [number, number] = [-80.4139, 37.2296];
