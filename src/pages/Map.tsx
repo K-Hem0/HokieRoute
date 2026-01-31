@@ -251,6 +251,7 @@ const Map = () => {
       {/* Left side controls - Hidden during navigation */}
       {!isNavigating && (
         <div className="absolute left-4 top-20 z-10 flex flex-col gap-2">
+          <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
           <Button
             size="icon"
             className="h-12 w-12 rounded-full shadow-lg"
@@ -259,7 +260,6 @@ const Map = () => {
           >
             {user ? <LogOut className="h-5 w-5" /> : <User className="h-5 w-5" />}
           </Button>
-          <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
           
           {/* Recenter / Location accuracy button */}
           <TooltipProvider>
