@@ -341,14 +341,6 @@ const Map = () => {
             className="absolute left-4 top-32 z-40 flex flex-col gap-2"
           >
             <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
-            <Button
-              size="icon"
-              className="h-12 w-12 rounded-full shadow-lg"
-              variant="secondary"
-              onClick={user ? handleSignOut : () => setShowAuth(true)}
-            >
-              {user ? <LogOut className="h-5 w-5" /> : <User className="h-5 w-5" />}
-            </Button>
             
             {/* Recenter / Location accuracy button */}
             <TooltipProvider>
@@ -408,7 +400,7 @@ const Map = () => {
         )}
       </AnimatePresence>
 
-      {/* Saved Routes FAB (hidden during navigation) */}
+      {/* Right side controls - Account & Saved (hidden during navigation) */}
       <AnimatePresence>
         {config.showSideControls && (
           <motion.div
@@ -416,10 +408,22 @@ const Map = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 20, opacity: 0 }}
             transition={{ duration: 0.25, delay: 0.1 }}
+            className="absolute right-4 top-32 z-40 flex flex-col gap-2"
           >
+            {/* Account button */}
             <Button
               size="icon"
-              className="absolute right-4 top-32 z-40 h-12 w-12 rounded-full shadow-lg"
+              className="h-12 w-12 rounded-full shadow-lg"
+              variant="secondary"
+              onClick={user ? handleSignOut : () => setShowAuth(true)}
+            >
+              {user ? <LogOut className="h-5 w-5" /> : <User className="h-5 w-5" />}
+            </Button>
+            
+            {/* Favorites button */}
+            <Button
+              size="icon"
+              className="h-12 w-12 rounded-full shadow-lg"
               variant="secondary"
               onClick={handleSavedClick}
             >
