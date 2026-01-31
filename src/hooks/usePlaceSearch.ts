@@ -38,6 +38,20 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): num
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/**
+ * Build Nominatim search URL with common parameters
+ */
+function buildNominatimUrl(query: string): string {
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", query);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("addressdetails", "1");
+  url.searchParams.set("limit", "8");
+  url.searchParams.set("viewbox", BLACKSBURG_VIEWBOX);
+  url.searchParams.set("countrycodes", "us");
+  return url.toString();
+}
+
 export const usePlaceSearch = () => {
   const [results, setResults] = useState<PlaceResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,37 +76,40 @@ export const usePlaceSearch = () => {
     abortControllerRef.current = new AbortController();
 
     try {
-      const url = new URL("https://nominatim.openstreetmap.org/search");
-      url.searchParams.set("q", query + " Blacksburg VA");
-      url.searchParams.set("format", "json");
-      url.searchParams.set("addressdetails", "1");
-      url.searchParams.set("limit", "6");
-      url.searchParams.set("viewbox", BLACKSBURG_VIEWBOX);
-      url.searchParams.set("bounded", "1");
-      url.searchParams.set("countrycodes", "us");
+      // Try two searches: one with location context, one without for better partial matching
+      const searches = [
+        // Primary: with Blacksburg context for local results
+        fetch(buildNominatimUrl(query + ", Blacksburg, VA"), {
+          headers: { "Accept": "application/json", "User-Agent": "SafeRouteApp/1.0" },
+          signal: abortControllerRef.current.signal,
+        }),
+        // Fallback: without strict context for partial name matches
+        fetch(buildNominatimUrl(query), {
+          headers: { "Accept": "application/json", "User-Agent": "SafeRouteApp/1.0" },
+          signal: abortControllerRef.current.signal,
+        }),
+      ];
 
-      const response = await fetch(url.toString(), {
-        headers: {
-          "Accept": "application/json",
-          "User-Agent": "SafeRouteApp/1.0",
-        },
-        signal: abortControllerRef.current.signal,
-      });
+      const responses = await Promise.all(searches);
+      const dataArrays = await Promise.all(responses.map(r => r.ok ? r.json() : []));
       
-      if (!response.ok) {
-        throw new Error("Geocoding request failed");
-      }
-
-      const data = await response.json();
-
+      // Combine and deduplicate results
+      const allResults = dataArrays.flat();
+      const seen = new Set<string>();
       let osmResults: PlaceResult[] = [];
-      if (Array.isArray(data) && data.length > 0) {
-        osmResults = data
-          .map(nominatimToPlaceResult)
-          .filter((result) => {
-            const [lon, lat] = result.coordinates;
-            return distanceKm(lat, lon, BLACKSBURG_CENTER.lat, BLACKSBURG_CENTER.lon) < 15;
-          });
+      
+      for (const item of allResults) {
+        if (!item.osm_id) continue;
+        const key = `${item.osm_type}-${item.osm_id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        
+        const result = nominatimToPlaceResult(item);
+        const [lon, lat] = result.coordinates;
+        // Filter to 15km radius around Blacksburg
+        if (distanceKm(lat, lon, BLACKSBURG_CENTER.lat, BLACKSBURG_CENTER.lon) < 15) {
+          osmResults.push(result);
+        }
       }
 
       setResults(osmResults.slice(0, 5));
