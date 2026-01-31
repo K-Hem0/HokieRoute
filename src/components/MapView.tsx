@@ -170,7 +170,7 @@ const MapView = ({
   const mapCenter: [number, number] = userLatLng || BLACKSBURG_CENTER;
 
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0" style={{ zIndex: 0, isolation: 'isolate' }}>
       <MapContainer
         center={mapCenter}
         zoom={15}
