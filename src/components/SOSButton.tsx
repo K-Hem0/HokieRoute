@@ -20,19 +20,51 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const formatLocationMessage = useCallback(() => {
-    if (!userLocation) {
-      return "Location unavailable.";
+  // Reverse geocode coordinates to get street address
+  const reverseGeocode = useCallback(async (lng: number, lat: number): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
+        { headers: { 'User-Agent': 'SafeRouteApp/1.0' } }
+      );
+      
+      if (!response.ok) throw new Error('Geocoding failed');
+      
+      const data = await response.json();
+      const addr = data.address;
+      
+      // Build a concise address string
+      const parts: string[] = [];
+      if (addr.house_number && addr.road) {
+        parts.push(`${addr.house_number} ${addr.road}`);
+      } else if (addr.road) {
+        parts.push(addr.road);
+      } else if (addr.building) {
+        parts.push(addr.building);
+      }
+      
+      if (addr.city || addr.town || addr.village) {
+        parts.push(addr.city || addr.town || addr.village);
+      }
+      
+      return parts.length > 0 ? parts.join(', ') : data.display_name?.split(',').slice(0, 2).join(',') || 'Unknown location';
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+      return `coordinates ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     }
-    const [lng, lat] = userLocation;
-    return `The caller's GPS coordinates are: Latitude ${lat.toFixed(6)}, Longitude ${lng.toFixed(6)}.`;
-  }, [userLocation]);
+  }, []);
 
   const generateEmergencyVoice = useCallback(async () => {
     setIsGeneratingVoice(true);
     
     try {
-      const locationInfo = formatLocationMessage();
+      let locationInfo = "Location unavailable.";
+      
+      if (userLocation) {
+        const [lng, lat] = userLocation;
+        const address = await reverseGeocode(lng, lat);
+        locationInfo = `The caller is located near ${address}.`;
+      }
       
       const response = await fetch(
         `${SUPABASE_URL}/functions/v1/elevenlabs-sos`,
@@ -84,7 +116,7 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     } finally {
       setIsGeneratingVoice(false);
     }
-  }, [formatLocationMessage]);
+  }, [userLocation, reverseGeocode]);
 
   const handleCall = useCallback(() => {
     // Open phone dialer with the safety number
