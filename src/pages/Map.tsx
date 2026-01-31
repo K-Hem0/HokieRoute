@@ -460,8 +460,11 @@ const Map = () => {
                     </div>
                   </div>
                   
-                  {/* Route reassurance - subtle expandable section */}
-                  <RouteReassurance className="mb-2 border-t border-border/50 pt-1" />
+                  {/* Route reassurance - uses real safety data */}
+                  <RouteReassurance 
+                    className="mb-2 border-t border-border/50 pt-1" 
+                    destinationName={selectedDestination?.name}
+                  />
                 </>
               )}
               
