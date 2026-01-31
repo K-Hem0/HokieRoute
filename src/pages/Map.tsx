@@ -45,6 +45,7 @@ const Map = () => {
   
   // Point-to-point routing state
   const [routeOrigin, setRouteOrigin] = useState<PlaceResult | null>(null);
+  const [routeDestination, setRouteDestination] = useState<PlaceResult | null>(null);
   const [showPointToPoint, setShowPointToPoint] = useState(false);
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
 
@@ -179,14 +180,14 @@ const Map = () => {
   // Point-to-point routing completed - just display the route, don't start navigation
   const handlePointToPointComplete = (origin: PlaceResult, destination: PlaceResult) => {
     setRouteOrigin(origin);
-    // Don't set selectedDestination - that triggers the destination card
-    // The route is already calculated and displayed on the map
+    setRouteDestination(destination); // Store for marker display only
     setShowPointToPoint(false);
     setExplore(); // Stay in explore mode, just show the route
   };
 
   const handleClearPointToPoint = () => {
     setRouteOrigin(null);
+    setRouteDestination(null);
     setSelectedDestination(null);
     setShowPointToPoint(false);
     clearRoute();
@@ -238,7 +239,9 @@ const Map = () => {
   };
 
   // Convert PlaceResult coordinates to the format expected by MapView
-  const destinationMarkerCoords = selectedDestination?.coordinates || null;
+  // Use point-to-point destination if available, otherwise selected destination
+  const destinationMarkerCoords = routeDestination?.coordinates || selectedDestination?.coordinates || null;
+  const originMarkerCoords = routeOrigin?.coordinates || null;
   
   // Determine if bottom UI should show
   const showBottomUI = !showDiscovery && !showRouteDetail && !showSaved && mapState === "explore";
@@ -252,6 +255,7 @@ const Map = () => {
         isDark={isDark}
         userLocation={effectiveLocation}
         destinationMarker={destinationMarkerCoords}
+        originMarker={originMarkerCoords}
         calculatedRoute={calculatedRoute?.coordinates || null}
         heatmapEnabled={heatmapEnabled}
         onHeatmapToggle={setHeatmapEnabled}
@@ -259,6 +263,8 @@ const Map = () => {
           if (mapState === "explore") {
             setSelectedRoute(null);
             setSelectedDestination(null);
+            setRouteOrigin(null);
+            setRouteDestination(null);
             clearRoute();
           }
         }}

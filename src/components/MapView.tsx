@@ -16,10 +16,60 @@ interface MapViewProps {
   isNavigating?: boolean;
   isDark?: boolean;
   destinationMarker?: [number, number] | null; // [lng, lat]
+  originMarker?: [number, number] | null; // [lng, lat] for point-to-point origin
   calculatedRoute?: [number, number][] | null; // [lng, lat] pairs from OSRM
   heatmapEnabled?: boolean;
   onHeatmapToggle?: (enabled: boolean) => void;
 }
+
+// Custom origin marker - simple filled circle with pulse
+const createOriginIcon = () => {
+  return L.divIcon({
+    className: "origin-marker",
+    html: `
+      <div class="origin-marker-container">
+        <div class="origin-marker-pulse"></div>
+        <div class="origin-marker-dot"></div>
+      </div>
+      <style>
+        .origin-marker-container {
+          position: relative;
+          width: 28px;
+          height: 28px;
+        }
+        .origin-marker-dot {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 16px;
+          height: 16px;
+          background: #10B981;
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+        }
+        .origin-marker-pulse {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 28px;
+          height: 28px;
+          background: rgba(16, 185, 129, 0.25);
+          border-radius: 50%;
+          animation: originPulse 2s ease-out infinite;
+        }
+        @keyframes originPulse {
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+      </style>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+};
 
 // Custom user location icon with premium styling
 const createUserIcon = () => {
@@ -173,6 +223,7 @@ const MapView = ({
   isNavigating = false,
   isDark = true,
   destinationMarker,
+  originMarker,
   calculatedRoute,
   heatmapEnabled: controlledHeatmapEnabled,
   onHeatmapToggle,
@@ -191,6 +242,10 @@ const MapView = ({
 
   const destLatLng: [number, number] | null = destinationMarker
     ? [destinationMarker[1], destinationMarker[0]]
+    : null;
+
+  const originLatLng: [number, number] | null = originMarker
+    ? [originMarker[1], originMarker[0]]
     : null;
 
   // Convert route coordinates from [lng, lat] to [lat, lng]
@@ -274,7 +329,10 @@ const MapView = ({
         {/* User location marker */}
         {userLatLng && <Marker position={userLatLng} icon={createUserIcon()} />}
 
-        {/* Destination marker */}
+        {/* Origin marker for point-to-point routes */}
+        {originLatLng && <Marker position={originLatLng} icon={createOriginIcon()} />}
+
+        {/* Destination marker (turkey foot) */}
         {destLatLng && <Marker position={destLatLng} icon={createDestinationIcon()} />}
 
         {/* Preset route polyline (outline + main) */}
