@@ -103,7 +103,6 @@ const Map = () => {
       setNavElapsedMin((prev) => {
         if (prev >= totalDuration) {
           setExplore();
-          toast.success("You've arrived at your destination!");
           return 0;
         }
         return prev + 1;
@@ -137,8 +136,6 @@ const Map = () => {
     
     // Stay in explore state (no dim effect) - destination card will show
     setExplore();
-    
-    toast.success(`Selected: ${place.name}`);
   };
 
   const handleClearSearch = () => {
@@ -163,9 +160,8 @@ const Map = () => {
     // Walking-only routing
     const result = await calculateRoute(origin, selectedDestination.coordinates);
     
-    if (result) {
-      toast.success(`Route found: ${formatDistance(result.distance)} • ${formatDuration(result.duration)}`);
-    } else {
+    if (!result) {
+      // Only show error toast - success is silent
       toast.error("Could not calculate route. Try a different destination.");
     }
   };
@@ -232,7 +228,6 @@ const Map = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success("Signed out successfully");
   };
 
   const handleOpenPointToPoint = () => {
