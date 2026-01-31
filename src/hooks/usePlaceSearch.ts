@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 
-// Mapbox Geocoding API - using the same public token
-const MAPBOX_TOKEN = "pk.eyJ1IjoibG92YWJsZS1kZW1vIiwiYSI6ImNtYmhxcW44cjA0cGYyanNkYjQ3cTNrcWMifQ.to60WE2Ma41bIrlxUJcIQQ";
+// Use environment variable for Mapbox token
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
 // Blacksburg bounding box for search bias
 const BLACKSBURG_BBOX = "-80.5,37.15,-80.35,37.35";
