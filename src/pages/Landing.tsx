@@ -118,15 +118,22 @@ const Landing = () => {
                   rx="25"
                   ry="15"
                   fill="none"
-                  stroke={isDark ? "hsl(263 70% 45%)" : "hsl(var(--primary))"}
-                  strokeWidth="2"
+                  stroke={isDark ? "#A78BFA" : "hsl(var(--primary))"}
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   className="animate-pulse"
+                  style={isDark ? { filter: "drop-shadow(0 0 6px #A78BFA)" } : undefined}
                 />
                 {/* Start point */}
                 <circle cx="25" cy="50" r="3" fill="hsl(var(--safe))" />
                 {/* End point */}
-                <circle cx="75" cy="50" r="3" fill={isDark ? "hsl(263 70% 45%)" : "hsl(var(--primary))"} />
+                <circle 
+                  cx="75" 
+                  cy="50" 
+                  r="3" 
+                  fill={isDark ? "#A78BFA" : "hsl(var(--primary))"}
+                  style={isDark ? { filter: "drop-shadow(0 0 4px #A78BFA)" } : undefined}
+                />
               </svg>
             </div>
             
