@@ -17,12 +17,36 @@ export const SOSButton = ({ className }: SOSButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<GeolocationPosition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Get location when dialog opens
+  const getLocation = useCallback(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => setCurrentLocation(position),
+        (error) => console.error("Location error:", error),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, []);
+
+  const formatLocationMessage = useCallback((position: GeolocationPosition | null) => {
+    if (!position) {
+      return "Location unavailable.";
+    }
+    const lat = position.coords.latitude.toFixed(6);
+    const lng = position.coords.longitude.toFixed(6);
+    const accuracy = Math.round(position.coords.accuracy);
+    return `The caller's GPS coordinates are: Latitude ${lat}, Longitude ${lng}, with accuracy of approximately ${accuracy} meters.`;
+  }, []);
 
   const generateEmergencyVoice = useCallback(async () => {
     setIsGeneratingVoice(true);
     
     try {
+      const locationInfo = formatLocationMessage(currentLocation);
+      
       const response = await fetch(
         `${SUPABASE_URL}/functions/v1/elevenlabs-sos`,
         {
@@ -33,7 +57,7 @@ export const SOSButton = ({ className }: SOSButtonProps) => {
             'Authorization': `Bearer ${SUPABASE_KEY}`,
           },
           body: JSON.stringify({
-            message: `This is an emergency SOS call from SafeRoute app. The caller needs immediate assistance and is requesting help. Their current location has been recorded. Please respond immediately. I repeat, this is an SOS emergency call.`
+            message: `This is an emergency SOS call from SafeRoute app. The caller needs immediate assistance and is requesting help. ${locationInfo} Please respond immediately. I repeat, this is an SOS emergency call. ${locationInfo}`
           }),
         }
       );
@@ -73,7 +97,7 @@ export const SOSButton = ({ className }: SOSButtonProps) => {
     } finally {
       setIsGeneratingVoice(false);
     }
-  }, []);
+  }, [currentLocation, formatLocationMessage]);
 
   const handleCall = useCallback(() => {
     // Open phone dialer with the safety number
@@ -82,8 +106,9 @@ export const SOSButton = ({ className }: SOSButtonProps) => {
   }, []);
 
   const handleSOSPress = useCallback(() => {
+    getLocation(); // Get location when opening SOS dialog
     setIsOpen(true);
-  }, []);
+  }, [getLocation]);
 
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
