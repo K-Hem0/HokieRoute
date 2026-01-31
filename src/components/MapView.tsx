@@ -210,25 +210,28 @@ const MapView = ({
   const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
   const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-  // Apply brightness boost to dark mode tiles via CSS
-  const darkTileStyle = isDark ? { filter: "brightness(1.3) contrast(1.1)" } : {};
+  // Day mode: softer, lighter feel for exploration
+  // Night mode: stronger contrast, dimmed surroundings for navigation focus
+  const darkTileStyle = isDark 
+    ? { filter: "brightness(0.9) contrast(1.15) saturate(0.9)" } 
+    : { filter: "brightness(1.05) contrast(0.95) saturate(1.1)" };
 
   const mapCenter: [number, number] = userLatLng || BLACKSBURG_CENTER;
 
-  // Route styling with navigation mode enhancement - brighter for dark mode
+  // Route styling - Night mode gets enhanced glow and higher contrast
   const routeStyle = {
-    color: isDark ? "#A78BFA" : "#8B5CF6", // Lighter violet in dark mode
-    weight: isNavigating ? 8 : 6,
+    color: isDark ? "#C4B5FD" : "#8B5CF6", // Brighter violet in night mode
+    weight: isNavigating ? (isDark ? 10 : 8) : (isDark ? 8 : 6),
     opacity: 1,
     lineCap: "round" as const,
     lineJoin: "round" as const,
   };
 
-  // Route outline for better visibility - glow effect in dark mode
+  // Route outline - stronger glow effect in night mode
   const routeOutlineStyle = {
-    color: isDark ? "#7C3AED" : "#ffffff",
-    weight: isNavigating ? 14 : 12,
-    opacity: isDark ? 0.6 : 0.8,
+    color: isDark ? "#8B5CF6" : "#ffffff",
+    weight: isNavigating ? (isDark ? 18 : 14) : (isDark ? 16 : 12),
+    opacity: isDark ? 0.7 : 0.8,
     lineCap: "round" as const,
     lineJoin: "round" as const,
   };
