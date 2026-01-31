@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef } from "react";
-import { filterPopularLocations, QuickLocation } from "@/lib/popular-locations";
 
 // Blacksburg, VA center and bounding box for Nominatim search
 const BLACKSBURG_CENTER = { lat: 37.2296, lon: -80.4139 };
@@ -11,21 +10,6 @@ export interface PlaceResult {
   fullAddress: string;
   coordinates: [number, number]; // [lng, lat]
   category?: string;
-}
-
-// Convert quick location to PlaceResult
-function quickLocationToPlaceResult(loc: QuickLocation): PlaceResult {
-  const fullAddress = /\bblacksburg\b/i.test(loc.address)
-    ? loc.address
-    : `${loc.address}, Blacksburg, VA`;
-
-  return {
-    id: `local-${loc.id}`,
-    name: loc.name,
-    fullAddress,
-    coordinates: loc.coordinates,
-    category: "Campus",
-  };
 }
 
 /**
@@ -72,17 +56,7 @@ export const usePlaceSearch = () => {
       return;
     }
 
-    // INSTANT: Show local results immediately (no waiting)
-    const localResults = filterPopularLocations(query).map(quickLocationToPlaceResult);
-    setResults(localResults);
-    
-    // If we have enough local results, don't hit the API
-    if (localResults.length >= 3) {
-      setLoading(false);
-      return;
-    }
-
-    // Background: Fetch from Nominatim for additional results
+    // Only use OpenStreetMap (Nominatim) results for names/addresses
     setLoading(true);
     setError(null);
     abortControllerRef.current = new AbortController();
@@ -121,14 +95,7 @@ export const usePlaceSearch = () => {
           });
       }
 
-      // Merge: local first, then API results (deduplicated)
-      const localIds = new Set(localResults.map(r => r.name.toLowerCase()));
-      const merged = [
-        ...localResults,
-        ...osmResults.filter(r => !localIds.has(r.name.toLowerCase()))
-      ];
-
-      setResults(merged.slice(0, 6));
+      setResults(osmResults.slice(0, 6));
     } catch (err: any) {
       if (err.name === 'AbortError') return; // Ignore aborted requests
       setError(err.message);
