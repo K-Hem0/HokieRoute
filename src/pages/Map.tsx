@@ -533,22 +533,21 @@ const Map = () => {
       <AnimatePresence>
         {routeOrigin && routeDestination && !showPointToPoint && mapState === "explore" && (
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
+            initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="absolute inset-x-0 bottom-0 z-10 p-4 pb-safe-bottom"
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute bottom-28 left-1/2 -translate-x-1/2 z-10"
           >
-            <div className="mx-auto max-w-md">
-              <Button
-                variant="secondary"
-                className="w-full h-12 rounded-xl shadow-lg text-sm font-medium"
-                onClick={handleClearPointToPoint}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Clear route
-              </Button>
-            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="rounded-full shadow-lg px-4 h-9 text-xs font-medium bg-card/95 backdrop-blur-md border border-border hover:bg-secondary"
+              onClick={handleClearPointToPoint}
+            >
+              <X className="h-3.5 w-3.5 mr-1.5" />
+              Clear route
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
