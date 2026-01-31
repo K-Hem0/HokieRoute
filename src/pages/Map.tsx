@@ -482,21 +482,28 @@ const Map = () => {
               </div>
 
               {/* Search results */}
-              {placeResults.length > 0 && (
+              {(placeResults.length > 0 || placesLoading) && (
                 <div className="max-h-40 overflow-y-auto rounded-lg border border-border bg-background">
-                  {placeResults.map((place) => (
-                    <button
-                      key={place.id}
-                      onClick={() => handlePointToPointPlaceSelect(place)}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-secondary transition-colors text-left"
-                    >
-                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{place.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{place.fullAddress}</p>
-                      </div>
-                    </button>
-                  ))}
+                  {placesLoading ? (
+                    <div className="flex items-center justify-center gap-2 p-4 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Searching...
+                    </div>
+                  ) : (
+                    placeResults.map((place) => (
+                      <button
+                        key={place.id}
+                        onClick={() => handlePointToPointPlaceSelect(place)}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-secondary transition-colors text-left"
+                      >
+                        <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{place.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{place.fullAddress}</p>
+                        </div>
+                      </button>
+                    ))
+                  )}
                 </div>
               )}
 
