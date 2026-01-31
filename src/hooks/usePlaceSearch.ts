@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
+import { filterPopularLocations, QuickLocation } from "@/lib/popular-locations";
 
 // Blacksburg, VA center and bounding box for Nominatim search
 const BLACKSBURG_CENTER = { lat: 37.2296, lon: -80.4139 };
@@ -10,6 +11,17 @@ export interface PlaceResult {
   fullAddress: string;
   coordinates: [number, number]; // [lng, lat]
   category?: string;
+}
+
+// Convert quick location to PlaceResult
+function quickLocationToPlaceResult(loc: QuickLocation): PlaceResult {
+  return {
+    id: `local-${loc.id}`,
+    name: loc.name,
+    fullAddress: loc.address,
+    coordinates: loc.coordinates,
+    category: "Campus",
+  };
 }
 
 /**
@@ -42,25 +54,43 @@ export const usePlaceSearch = () => {
   const [results, setResults] = useState<PlaceResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const searchPlaces = useCallback(async (query: string) => {
+    // Cancel any pending request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     if (!query || query.length < 2) {
       setResults([]);
+      setLoading(false);
       return;
     }
 
+    // INSTANT: Show local results immediately (no waiting)
+    const localResults = filterPopularLocations(query).map(quickLocationToPlaceResult);
+    setResults(localResults);
+    
+    // If we have enough local results, don't hit the API
+    if (localResults.length >= 3) {
+      setLoading(false);
+      return;
+    }
+
+    // Background: Fetch from Nominatim for additional results
     setLoading(true);
     setError(null);
+    abortControllerRef.current = new AbortController();
 
     try {
-      // Fetch from Nominatim (OpenStreetMap geocoder)
       const url = new URL("https://nominatim.openstreetmap.org/search");
       url.searchParams.set("q", query + " Blacksburg VA");
       url.searchParams.set("format", "json");
       url.searchParams.set("addressdetails", "1");
-      url.searchParams.set("limit", "6");
+      url.searchParams.set("limit", "5");
       url.searchParams.set("viewbox", BLACKSBURG_VIEWBOX);
-      url.searchParams.set("bounded", "1"); // Strictly limit to viewbox
+      url.searchParams.set("bounded", "1");
       url.searchParams.set("countrycodes", "us");
 
       const response = await fetch(url.toString(), {
@@ -68,6 +98,7 @@ export const usePlaceSearch = () => {
           "Accept": "application/json",
           "User-Agent": "SafeRouteApp/1.0",
         },
+        signal: abortControllerRef.current.signal,
       });
       
       if (!response.ok) {
@@ -80,15 +111,22 @@ export const usePlaceSearch = () => {
       if (Array.isArray(data) && data.length > 0) {
         osmResults = data
           .map(nominatimToPlaceResult)
-          // Filter out results too far from Blacksburg (>15km)
           .filter((result) => {
             const [lon, lat] = result.coordinates;
             return distanceKm(lat, lon, BLACKSBURG_CENTER.lat, BLACKSBURG_CENTER.lon) < 15;
           });
       }
 
-      setResults(osmResults.slice(0, 6));
+      // Merge: local first, then API results (deduplicated)
+      const localIds = new Set(localResults.map(r => r.name.toLowerCase()));
+      const merged = [
+        ...localResults,
+        ...osmResults.filter(r => !localIds.has(r.name.toLowerCase()))
+      ];
+
+      setResults(merged.slice(0, 6));
     } catch (err: any) {
+      if (err.name === 'AbortError') return; // Ignore aborted requests
       setError(err.message);
       setResults([]);
     } finally {
@@ -97,7 +135,11 @@ export const usePlaceSearch = () => {
   }, []);
 
   const clearResults = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
     setResults([]);
+    setLoading(false);
   }, []);
 
   return { results, loading, error, searchPlaces, clearResults };
