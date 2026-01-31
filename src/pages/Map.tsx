@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MapView } from "@/components/MapView";
-import { PillInput } from "@/components/ui/PillInput";
+import { PlaceSearchInput } from "@/components/PlaceSearchInput";
 import { ModeToggle, Mode } from "@/components/ui/ModeToggle";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { RouteCard } from "@/components/RouteCard";
@@ -15,7 +15,9 @@ import { useRoutes } from "@/hooks/useRoutes";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
 import { useTheme } from "@/hooks/useTheme";
-import { Heart, Search, User, LogOut, Loader2, Flag } from "lucide-react";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
+import { Heart, Search, User, LogOut, Loader2, Flag, Navigation, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -31,11 +33,31 @@ const Map = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isNavigating, setIsNavigating] = useState(false);
   const [navElapsedMin, setNavElapsedMin] = useState(0);
+  const [selectedDestination, setSelectedDestination] = useState<PlaceResult | null>(null);
 
   const { routes, loading: routesLoading } = useRoutes();
   const { user, signOut } = useAuth();
   const { savedRouteIds, toggleSaveRoute, unsaveRoute, isRouteSaved } = useSavedRoutes();
   const { isDark, toggleTheme } = useTheme();
+  const { effectiveLocation, requestLocation } = useGeolocation();
+  const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = usePlaceSearch();
+
+  // Request location on mount
+  useEffect(() => {
+    requestLocation();
+  }, [requestLocation]);
+
+  // Debounced place search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery) {
+        searchPlaces(searchQuery);
+      } else {
+        clearResults();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchPlaces, clearResults]);
 
   const nearbyRoutes = routes.slice(0, 3);
   
@@ -60,16 +82,35 @@ const Map = () => {
         }
         return prev + 1;
       });
-    }, 3000); // Speed up for demo: 3 seconds = 1 minute
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [isNavigating, selectedRoute, mode]);
 
   const handleRouteSelect = (route: Route) => {
     setSelectedRoute(route);
+    setSelectedDestination(null);
     setShowDiscovery(false);
     setShowSaved(false);
     setShowRouteDetail(true);
+  };
+
+  const handlePlaceSelect = (place: PlaceResult) => {
+    setSelectedDestination(place);
+    setSearchQuery(place.name);
+    clearResults();
+    toast.success(`Selected: ${place.name}`);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setSelectedDestination(null);
+    clearResults();
+  };
+
+  const handleNavigateToDestination = () => {
+    if (!selectedDestination) return;
+    toast.info("Route planning coming soon! For now, explore preset routes.");
   };
 
   const handleSaveRoute = async () => {
@@ -120,9 +161,12 @@ const Map = () => {
         selectedRoute={selectedRoute}
         isNavigating={isNavigating}
         isDark={isDark}
+        userLocation={effectiveLocation}
+        destinationMarker={selectedDestination?.coordinates}
         onMapClick={() => {
           if (!showDiscovery && !showRouteDetail && !showSaved && !isNavigating) {
             setSelectedRoute(null);
+            setSelectedDestination(null);
           }
         }}
       />
@@ -147,12 +191,14 @@ const Map = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <PillInput
-              placeholder="Where in Blacksburg?"
+            <PlaceSearchInput
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setShowDiscovery(true)}
-              icon={<Search className="h-5 w-5 text-muted-foreground" />}
+              onChange={setSearchQuery}
+              results={placeResults}
+              loading={placesLoading}
+              onSelectPlace={handlePlaceSelect}
+              onClear={handleClearSearch}
+              placeholder="Search buildings, places in Blacksburg..."
             />
           </motion.div>
         </div>
@@ -185,12 +231,45 @@ const Map = () => {
         </Button>
       )}
 
+      {/* Navigate to destination button */}
+      <AnimatePresence>
+        {selectedDestination && !isNavigating && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="absolute inset-x-0 bottom-0 z-20 p-4 pb-safe-bottom"
+          >
+            <div className="mx-auto max-w-md rounded-xl border border-border bg-card p-4 shadow-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                  <MapPin className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">{selectedDestination.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{selectedDestination.fullAddress}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={handleClearSearch}>
+                  Cancel
+                </Button>
+                <Button className="flex-1" onClick={handleNavigateToDestination}>
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Navigate
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Report FAB - Always visible but positioned based on nav state */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-        className={`absolute right-4 z-10 ${isNavigating ? "bottom-8" : "bottom-[280px]"}`}
+        className={`absolute right-4 z-10 ${isNavigating ? "bottom-8" : selectedDestination ? "bottom-40" : "bottom-[280px]"}`}
       >
         <Button
           size="icon"
@@ -202,7 +281,7 @@ const Map = () => {
       </motion.div>
 
       {/* Bottom Quick Access (when no sheet is open and not navigating) */}
-      {showBottomUI && (
+      {showBottomUI && !selectedDestination && (
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -250,20 +329,11 @@ const Map = () => {
         isOpen={showDiscovery}
         onClose={() => {
           setShowDiscovery(false);
-          setSearchQuery("");
         }}
         title="Explore Blacksburg"
         snapPoints={[0.6, 0.9]}
       >
         <div className="space-y-4 py-4">
-          {/* Search */}
-          <PillInput
-            placeholder="Campus, downtown, trails..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="mb-2"
-          />
-
           {/* Mode Toggle */}
           <div className="flex justify-center">
             <ModeToggle mode={mode} onChange={setMode} />
@@ -275,8 +345,8 @@ const Map = () => {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-            ) : filteredRoutes.length > 0 ? (
-              filteredRoutes.map((route) => (
+            ) : routes.length > 0 ? (
+              routes.map((route) => (
                 <RouteCard
                   key={route.id}
                   route={route}
