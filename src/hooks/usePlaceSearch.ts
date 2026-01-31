@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { searchLocalLocations, LocalLocation } from "@/lib/blacksburg-locations";
 
 // Blacksburg, VA center and bounding box for Nominatim search
 const BLACKSBURG_CENTER = { lat: 37.2296, lon: -80.4139 };
@@ -10,6 +11,19 @@ export interface PlaceResult {
   fullAddress: string;
   coordinates: [number, number]; // [lng, lat]
   category?: string;
+}
+
+/**
+ * Convert local location to PlaceResult format
+ */
+function localToPlaceResult(location: LocalLocation): PlaceResult {
+  return {
+    id: location.id,
+    name: location.name,
+    fullAddress: location.fullAddress,
+    coordinates: location.coordinates,
+    category: location.category,
+  };
 }
 
 /**
@@ -70,53 +84,60 @@ export const usePlaceSearch = () => {
       return;
     }
 
-    // Only use OpenStreetMap (Nominatim) results for names/addresses
     setLoading(true);
     setError(null);
     abortControllerRef.current = new AbortController();
 
     try {
-      // Try two searches: one with location context, one without for better partial matching
-      const searches = [
-        // Primary: with Blacksburg context for local results
-        fetch(buildNominatimUrl(query + ", Blacksburg, VA"), {
-          headers: { "Accept": "application/json", "User-Agent": "SafeRouteApp/1.0" },
-          signal: abortControllerRef.current.signal,
-        }),
-        // Fallback: without strict context for partial name matches
-        fetch(buildNominatimUrl(query), {
-          headers: { "Accept": "application/json", "User-Agent": "SafeRouteApp/1.0" },
-          signal: abortControllerRef.current.signal,
-        }),
-      ];
+      // First, search local database for instant prefix matching
+      const localResults = searchLocalLocations(query).map(localToPlaceResult);
+      
+      // If we have enough local results, show them immediately
+      if (localResults.length >= 3) {
+        setResults(localResults.slice(0, 5));
+        setLoading(false);
+        return;
+      }
 
-      const responses = await Promise.all(searches);
-      const dataArrays = await Promise.all(responses.map(r => r.ok ? r.json() : []));
-      
-      // Combine and deduplicate results
-      const allResults = dataArrays.flat();
-      const seen = new Set<string>();
+      // Also search Nominatim for additional results
+      const nominatimQuery = `${query}, Blacksburg, Virginia`;
+      const response = await fetch(buildNominatimUrl(nominatimQuery), {
+        headers: { "Accept": "application/json", "User-Agent": "SafeRouteApp/1.0" },
+        signal: abortControllerRef.current.signal,
+      });
+
       let osmResults: PlaceResult[] = [];
-      
-      for (const item of allResults) {
-        if (!item.osm_id) continue;
-        const key = `${item.osm_type}-${item.osm_id}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        
-        const result = nominatimToPlaceResult(item);
-        const [lon, lat] = result.coordinates;
-        // Filter to 15km radius around Blacksburg
-        if (distanceKm(lat, lon, BLACKSBURG_CENTER.lat, BLACKSBURG_CENTER.lon) < 15) {
-          osmResults.push(result);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          const seen = new Set(localResults.map(r => r.name.toLowerCase()));
+          
+          for (const item of data) {
+            if (!item?.osm_id) continue;
+            const result = nominatimToPlaceResult(item);
+            const [lon, lat] = result.coordinates;
+            
+            // Filter to 15km radius and avoid duplicates
+            if (
+              distanceKm(lat, lon, BLACKSBURG_CENTER.lat, BLACKSBURG_CENTER.lon) < 15 &&
+              !seen.has(result.name.toLowerCase())
+            ) {
+              osmResults.push(result);
+              seen.add(result.name.toLowerCase());
+            }
+          }
         }
       }
 
-      setResults(osmResults.slice(0, 5));
+      // Combine local and Nominatim results, prioritizing local
+      const combined = [...localResults, ...osmResults].slice(0, 5);
+      setResults(combined);
     } catch (err: any) {
-      if (err.name === 'AbortError') return; // Ignore aborted requests
+      if (err.name === 'AbortError') return;
       setError(err.message);
-      setResults([]);
+      // Still show local results on error
+      const localResults = searchLocalLocations(query).map(localToPlaceResult);
+      setResults(localResults.slice(0, 5));
     } finally {
       setLoading(false);
     }
