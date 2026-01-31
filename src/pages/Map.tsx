@@ -178,8 +178,6 @@ const Map = () => {
     // Enter navigation mode
     setNavigation();
     setNavElapsedMin(0);
-    
-    toast.success("Navigation started");
   };
 
   // Point-to-point routing completed
@@ -187,7 +185,6 @@ const Map = () => {
     setRouteOrigin(origin);
     setSelectedDestination(destination);
     setShowPointToPoint(false);
-    toast.success("Route ready - tap Start Navigation to begin");
   };
 
   const handleClearPointToPoint = () => {
@@ -214,7 +211,6 @@ const Map = () => {
     setShowRouteDetail(false);
     setNavigation();
     setNavElapsedMin(0);
-    toast.success("Navigation started");
   };
 
   const handleStopNavigation = () => {
@@ -224,7 +220,6 @@ const Map = () => {
     setSelectedDestination(null);
     setSearchQuery("");
     clearRoute();
-    toast.info("Navigation ended");
   };
 
   const handleSavedClick = () => {
