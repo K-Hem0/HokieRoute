@@ -1,283 +1,237 @@
-import { useRef, useEffect, useState } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { useEffect, useRef, useState } from "react";
+import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { Route } from "@/lib/mock-data";
 
-// Mapbox public token
-const MAPBOX_TOKEN = "pk.eyJ1IjoiMmtoZW0yIiwiYSI6ImNtbDJub2t0ZzBqaDgzZG9taTNibDc4NmMifQ._--O2_C9mapakXYDWdehmQ";
-
 // Blacksburg, VA center
-const BLACKSBURG_CENTER: [number, number] = [-80.4139, 37.2296];
+const BLACKSBURG_CENTER: [number, number] = [37.2296, -80.4139]; // [lat, lng] for Leaflet
 
 interface MapViewProps {
   selectedRoute?: Route | null;
   onMapClick?: () => void;
-  userLocation?: [number, number] | null;
+  userLocation?: [number, number] | null; // [lng, lat] from geolocation
   isNavigating?: boolean;
   isDark?: boolean;
-  destinationMarker?: [number, number] | null;
+  destinationMarker?: [number, number] | null; // [lng, lat]
+  calculatedRoute?: [number, number][] | null; // [lng, lat] pairs from OSRM
 }
 
-const MapView = ({ 
-  selectedRoute, 
-  onMapClick, 
-  userLocation, 
+// Custom user location icon
+const createUserIcon = () => {
+  return L.divIcon({
+    className: "user-location-marker",
+    html: `
+      <div style="
+        width: 20px;
+        height: 20px;
+        background: hsl(262, 83%, 58%);
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+        animation: pulse 2s infinite;
+      "></div>
+      <style>
+        @keyframes pulse {
+          0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+          70% { box-shadow: 0 0 0 15px rgba(139, 92, 246, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+        }
+      </style>
+    `,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+};
+
+// Custom destination icon
+const createDestinationIcon = () => {
+  return L.divIcon({
+    className: "destination-marker",
+    html: `
+      <div style="
+        width: 32px;
+        height: 32px;
+        background: hsl(262, 83%, 58%);
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      ">
+        <div style="
+          width: 12px;
+          height: 12px;
+          background: white;
+          border-radius: 50%;
+          transform: rotate(45deg);
+        "></div>
+      </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+  });
+};
+
+// Component to handle map view updates
+const MapController = ({
+  center,
+  selectedRoute,
+  destinationMarker,
+  isNavigating,
+  calculatedRoute,
+}: {
+  center: [number, number];
+  selectedRoute?: Route | null;
+  destinationMarker?: [number, number] | null;
+  isNavigating?: boolean;
+  calculatedRoute?: [number, number][] | null;
+}) => {
+  const map = useMap();
+  const lastCenter = useRef<[number, number] | null>(null);
+
+  useEffect(() => {
+    // Priority 1: Fit to calculated route
+    if (calculatedRoute && calculatedRoute.length > 0) {
+      const latLngs = calculatedRoute.map(([lng, lat]) => [lat, lng] as [number, number]);
+      const bounds = L.latLngBounds(latLngs);
+      const padding: [number, number] = isNavigating ? [150, 50] : [100, 50];
+      map.fitBounds(bounds, { padding });
+      return;
+    }
+
+    // Priority 2: Fit to selected preset route
+    if (selectedRoute && selectedRoute.coordinates.length > 0) {
+      const latLngs = selectedRoute.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]);
+      const bounds = L.latLngBounds(latLngs);
+      const padding: [number, number] = isNavigating ? [150, 50] : [100, 50];
+      map.fitBounds(bounds, { padding });
+      return;
+    }
+
+    // Priority 3: Fly to destination marker
+    if (destinationMarker) {
+      const [lng, lat] = destinationMarker;
+      map.flyTo([lat, lng], 16, { duration: 1 });
+      return;
+    }
+
+    // Priority 4: Center on user location (only if changed significantly)
+    const [lat, lng] = center;
+    if (
+      !lastCenter.current ||
+      Math.abs(lastCenter.current[0] - lat) > 0.001 ||
+      Math.abs(lastCenter.current[1] - lng) > 0.001
+    ) {
+      map.flyTo(center, 15, { duration: 1 });
+      lastCenter.current = center;
+    }
+  }, [map, center, selectedRoute, destinationMarker, isNavigating, calculatedRoute]);
+
+  return null;
+};
+
+const MapView = ({
+  selectedRoute,
+  onMapClick,
+  userLocation,
   isNavigating = false,
   isDark = true,
   destinationMarker,
+  calculatedRoute,
 }: MapViewProps) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const userMarker = useRef<mapboxgl.Marker | null>(null);
-  const destMarker = useRef<mapboxgl.Marker | null>(null);
-  const routeLayerId = useRef<string | null>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
 
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+  // Convert [lng, lat] to [lat, lng] for Leaflet
+  const userLatLng: [number, number] | null = userLocation
+    ? [userLocation[1], userLocation[0]]
+    : null;
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
+  const destLatLng: [number, number] | null = destinationMarker
+    ? [destinationMarker[1], destinationMarker[0]]
+    : null;
 
-    const center = userLocation || BLACKSBURG_CENTER;
+  // Convert route coordinates from [lng, lat] to [lat, lng]
+  const routeLatLngs: [number, number][] = selectedRoute
+    ? selectedRoute.coordinates.map(([lng, lat]) => [lat, lng] as [number, number])
+    : [];
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: isDark ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11",
-      center: center,
-      zoom: 15,
-      attributionControl: false,
-    });
+  // Convert calculated route from [lng, lat] to [lat, lng]
+  const calculatedLatLngs: [number, number][] = calculatedRoute
+    ? calculatedRoute.map(([lng, lat]) => [lat, lng] as [number, number])
+    : [];
 
-    map.current.on("load", () => {
-      setMapLoaded(true);
-    });
+  // Tile layer URLs
+  const lightTiles = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+  const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-    map.current.on("click", () => {
-      onMapClick?.();
-    });
-
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl({ showCompass: false }),
-      "bottom-right"
-    );
-
-    return () => {
-      userMarker.current?.remove();
-      destMarker.current?.remove();
-      map.current?.remove();
-      map.current = null;
-    };
-  }, []);
-
-  // Update map style when theme changes
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
-    
-    const newStyle = isDark 
-      ? "mapbox://styles/mapbox/dark-v11" 
-      : "mapbox://styles/mapbox/light-v11";
-    
-    map.current.setStyle(newStyle);
-    
-    // Re-add route after style change
-    map.current.once("style.load", () => {
-      if (selectedRoute && routeLayerId.current) {
-        addRouteToMap(selectedRoute);
-      }
-    });
-  }, [isDark, mapLoaded]);
-
-  // Update user location marker
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
-
-    if (userLocation) {
-      if (userMarker.current) {
-        userMarker.current.setLngLat(userLocation);
-      } else {
-        // Create user location marker with pulsing effect
-        const el = document.createElement("div");
-        el.className = "user-location-marker";
-        el.innerHTML = `
-          <div style="
-            width: 20px;
-            height: 20px;
-            background: hsl(262, 83%, 58%);
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
-            animation: pulse 2s infinite;
-          "></div>
-          <style>
-            @keyframes pulse {
-              0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
-              70% { box-shadow: 0 0 0 15px rgba(139, 92, 246, 0); }
-              100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
-            }
-          </style>
-        `;
-        
-        userMarker.current = new mapboxgl.Marker({ element: el })
-          .setLngLat(userLocation)
-          .addTo(map.current);
-      }
-
-      // Center on user if no route selected
-      if (!selectedRoute) {
-        map.current.flyTo({
-          center: userLocation,
-          zoom: 15,
-          duration: 1000,
-        });
-      }
-    }
-  }, [userLocation, mapLoaded, selectedRoute]);
-
-  // Update destination marker
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
-
-    if (destinationMarker) {
-      if (destMarker.current) {
-        destMarker.current.setLngLat(destinationMarker);
-      } else {
-        const el = document.createElement("div");
-        el.innerHTML = `
-          <div style="
-            width: 32px;
-            height: 32px;
-            background: hsl(262, 83%, 58%);
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          ">
-            <div style="
-              width: 12px;
-              height: 12px;
-              background: white;
-              border-radius: 50%;
-              transform: rotate(45deg);
-            "></div>
-          </div>
-        `;
-        
-        destMarker.current = new mapboxgl.Marker({ element: el, offset: [0, -16] })
-          .setLngLat(destinationMarker)
-          .addTo(map.current);
-      }
-
-      // Fly to destination
-      map.current.flyTo({
-        center: destinationMarker,
-        zoom: 16,
-        duration: 1000,
-      });
-    } else {
-      destMarker.current?.remove();
-      destMarker.current = null;
-    }
-  }, [destinationMarker, mapLoaded]);
-
-  const addRouteToMap = (route: Route) => {
-    if (!map.current) return;
-
-    const sourceId = `route-${route.id}`;
-    routeLayerId.current = sourceId;
-
-    // Check if source already exists
-    if (map.current.getSource(sourceId)) {
-      if (map.current.getLayer(sourceId)) {
-        map.current.removeLayer(sourceId);
-      }
-      map.current.removeSource(sourceId);
-    }
-
-    // Add route source and layer
-    map.current.addSource(sourceId, {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "LineString",
-          coordinates: route.coordinates,
-        },
-      },
-    });
-
-    map.current.addLayer({
-      id: sourceId,
-      type: "line",
-      source: sourceId,
-      layout: {
-        "line-join": "round",
-        "line-cap": "round",
-      },
-      paint: {
-        "line-color": "#8B5CF6",
-        "line-width": isNavigating ? 6 : 4,
-        "line-opacity": isNavigating ? 1 : 0.8,
-      },
-    });
-  };
-
-  // Handle route display
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
-
-    // Remove existing route layer
-    if (routeLayerId.current) {
-      if (map.current.getLayer(routeLayerId.current)) {
-        map.current.removeLayer(routeLayerId.current);
-      }
-      if (map.current.getSource(routeLayerId.current)) {
-        map.current.removeSource(routeLayerId.current);
-      }
-    }
-
-    if (!selectedRoute) return;
-
-    addRouteToMap(selectedRoute);
-
-    // Fit map to route bounds
-    const bounds = selectedRoute.coordinates.reduce(
-      (bounds, coord) => bounds.extend(coord as [number, number]),
-      new mapboxgl.LngLatBounds(
-        selectedRoute.coordinates[0] as [number, number],
-        selectedRoute.coordinates[0] as [number, number]
-      )
-    );
-
-    const padding = isNavigating 
-      ? { top: 150, bottom: 100, left: 50, right: 50 }
-      : { top: 100, bottom: 300, left: 50, right: 50 };
-
-    map.current.fitBounds(bounds, {
-      padding,
-      duration: 500,
-    });
-  }, [selectedRoute, mapLoaded, isNavigating]);
-
-  // Update route style when navigation state changes
-  useEffect(() => {
-    if (!map.current || !mapLoaded || !routeLayerId.current) return;
-    
-    if (map.current.getLayer(routeLayerId.current)) {
-      map.current.setPaintProperty(routeLayerId.current, "line-width", isNavigating ? 6 : 4);
-      map.current.setPaintProperty(routeLayerId.current, "line-opacity", isNavigating ? 1 : 0.8);
-    }
-  }, [isNavigating, mapLoaded]);
+  const mapCenter: [number, number] = userLatLng || BLACKSBURG_CENTER;
 
   return (
-    <div 
-      ref={mapContainer} 
-      className="absolute inset-0 transition-opacity duration-300" 
-    />
+    <div className="absolute inset-0">
+      <MapContainer
+        center={mapCenter}
+        zoom={15}
+        zoomControl={false}
+        className="h-full w-full"
+        whenReady={() => setMapReady(true)}
+      >
+        <TileLayer
+          key={isDark ? "dark" : "light"}
+          attribution={attribution}
+          url={isDark ? darkTiles : lightTiles}
+        />
+
+        <ZoomControl position="bottomright" />
+
+        <MapController
+          center={mapCenter}
+          selectedRoute={selectedRoute}
+          destinationMarker={destinationMarker}
+          isNavigating={isNavigating}
+          calculatedRoute={calculatedRoute}
+        />
+
+        {/* User location marker */}
+        {userLatLng && <Marker position={userLatLng} icon={createUserIcon()} />}
+
+        {/* Destination marker */}
+        {destLatLng && <Marker position={destLatLng} icon={createDestinationIcon()} />}
+
+        {/* Preset route polyline */}
+        {routeLatLngs.length > 0 && !calculatedRoute && (
+          <Polyline
+            positions={routeLatLngs}
+            pathOptions={{
+              color: "#8B5CF6",
+              weight: isNavigating ? 6 : 4,
+              opacity: isNavigating ? 1 : 0.8,
+            }}
+          />
+        )}
+
+        {/* Calculated route polyline */}
+        {calculatedLatLngs.length > 0 && (
+          <Polyline
+            positions={calculatedLatLngs}
+            pathOptions={{
+              color: "#8B5CF6",
+              weight: isNavigating ? 6 : 4,
+              opacity: 1,
+            }}
+          />
+        )}
+      </MapContainer>
+
+      {/* Click overlay to detect map taps */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ zIndex: 400 }}
+        onClick={onMapClick}
+      />
+    </div>
   );
 };
 
