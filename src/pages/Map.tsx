@@ -20,11 +20,13 @@ import { useTheme } from "@/hooks/useTheme";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
 import { useRouting, formatDistance, formatDuration } from "@/hooks/useRouting";
+import { useMapState } from "@/hooks/useMapState";
 import { Heart, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const Map = () => {
   const [mode, setMode] = useState<Mode>("walk");
@@ -36,13 +38,15 @@ const Map = () => {
   const [showReport, setShowReport] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
   const [navElapsedMin, setNavElapsedMin] = useState(0);
   const [selectedDestination, setSelectedDestination] = useState<PlaceResult | null>(null);
   
   // Point-to-point routing state
   const [routeOrigin, setRouteOrigin] = useState<PlaceResult | null>(null);
   const [showPointToPoint, setShowPointToPoint] = useState(false);
+
+  // Map state management
+  const { state: mapState, config, setExplore, setPlanning, setNavigation } = useMapState("explore");
 
   const { routes, loading: routesLoading } = useRoutes();
   const { user, signOut } = useAuth();
@@ -72,11 +76,22 @@ const Map = () => {
     return () => clearTimeout(timer);
   }, [searchQuery, searchPlaces, clearResults, effectiveLocation]);
 
+  // Sync map state with UI state
+  useEffect(() => {
+    if (showPointToPoint || selectedDestination || showRouteDetail) {
+      setPlanning();
+    } else if (mapState === "navigation") {
+      // Stay in navigation
+    } else {
+      setExplore();
+    }
+  }, [showPointToPoint, selectedDestination, showRouteDetail, mapState, setPlanning, setExplore]);
+
   const nearbyRoutes = routes.slice(0, 3);
 
   // Simulate navigation progress
   useEffect(() => {
-    if (!isNavigating || !selectedRoute) return;
+    if (mapState !== "navigation" || !selectedRoute) return;
 
     const totalDuration = mode === 'walk' 
       ? selectedRoute.duration_walk_min 
@@ -85,7 +100,7 @@ const Map = () => {
     const interval = setInterval(() => {
       setNavElapsedMin((prev) => {
         if (prev >= totalDuration) {
-          setIsNavigating(false);
+          setExplore();
           toast.success("You've arrived at your destination!");
           return 0;
         }
@@ -94,7 +109,7 @@ const Map = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isNavigating, selectedRoute, mode]);
+  }, [mapState, selectedRoute, mode, setExplore]);
 
   const handleRouteSelect = (route: Route) => {
     setSelectedRoute(route);
@@ -119,6 +134,7 @@ const Map = () => {
     setSelectedDestination(null);
     clearResults();
     clearRoute();
+    setExplore();
   };
 
   const handleNavigateToDestination = async () => {
@@ -149,6 +165,7 @@ const Map = () => {
     setSelectedDestination(null);
     setShowPointToPoint(false);
     clearRoute();
+    setExplore();
   };
 
   const handleSaveRoute = async () => {
@@ -165,13 +182,13 @@ const Map = () => {
   const handleStartRoute = () => {
     if (!selectedRoute) return;
     setShowRouteDetail(false);
-    setIsNavigating(true);
+    setNavigation();
     setNavElapsedMin(0);
     toast.success("Navigation started");
   };
 
   const handleStopNavigation = () => {
-    setIsNavigating(false);
+    setExplore();
     setNavElapsedMin(0);
     setSelectedRoute(null);
     toast.info("Navigation ended");
@@ -190,23 +207,29 @@ const Map = () => {
     toast.success("Signed out successfully");
   };
 
-  const showBottomUI = !showDiscovery && !showRouteDetail && !showSaved && !isNavigating;
+  const handleOpenPointToPoint = () => {
+    setShowPointToPoint(true);
+    setPlanning();
+  };
 
   // Convert PlaceResult coordinates to the format expected by MapView
   const destinationMarkerCoords = selectedDestination?.coordinates || null;
+  
+  // Determine if bottom UI should show
+  const showBottomUI = !showDiscovery && !showRouteDetail && !showSaved && mapState === "explore";
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Map */}
       <MapView
         selectedRoute={selectedRoute}
-        isNavigating={isNavigating}
+        isNavigating={mapState === "navigation"}
         isDark={isDark}
         userLocation={effectiveLocation}
         destinationMarker={destinationMarkerCoords}
         calculatedRoute={calculatedRoute?.coordinates || null}
         onMapClick={() => {
-          if (!showDiscovery && !showRouteDetail && !showSaved && !isNavigating) {
+          if (mapState === "explore") {
             setSelectedRoute(null);
             setSelectedDestination(null);
             clearRoute();
@@ -214,25 +237,41 @@ const Map = () => {
         }}
       />
 
-      {/* Navigation Status Bar */}
+      {/* Planning mode dim overlay */}
       <AnimatePresence>
-        {isNavigating && selectedRoute && (
+        {config.mapDimmed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 bg-background/30 backdrop-blur-[1px] pointer-events-none z-[5]"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Navigation Status Bar - Compact at bottom */}
+      <AnimatePresence>
+        {mapState === "navigation" && selectedRoute && (
           <NavigationStatusBar
             route={selectedRoute}
             mode={mode}
             onStop={handleStopNavigation}
             elapsedMin={navElapsedMin}
+            compact={true}
           />
         )}
       </AnimatePresence>
 
-      {/* Top Overlay - Hidden during navigation */}
-      {!isNavigating && (
-        <div className="absolute inset-x-0 top-0 z-30 p-4 pt-safe">
-          <motion.div
+      {/* Top Overlay - Search bar (hidden during navigation) */}
+      <AnimatePresence>
+        {config.showSearch && (
+          <motion.div 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
+            exit={{ y: -20, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="absolute inset-x-0 top-0 z-30 p-4 pt-safe"
           >
             <PlaceSearchInput
               value={searchQuery}
@@ -245,79 +284,106 @@ const Map = () => {
               hasSearched={hasSearched}
             />
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-      {/* Left side controls - Hidden during navigation */}
-      {!isNavigating && (
-        <div className="absolute left-4 top-20 z-10 flex flex-col gap-2">
-          <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
-          <Button
-            size="icon"
-            className="h-12 w-12 rounded-full shadow-lg"
-            variant="secondary"
-            onClick={user ? handleSignOut : () => setShowAuth(true)}
-          >
-            {user ? <LogOut className="h-5 w-5" /> : <User className="h-5 w-5" />}
-          </Button>
-          
-          {/* Recenter / Location accuracy button */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  className={`h-12 w-12 rounded-full shadow-lg ${!isAccurate ? 'animate-pulse' : ''}`}
-                  variant="secondary"
-                  onClick={requestLocation}
-                  disabled={locationLoading}
-                >
-                  {locationLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Crosshair className={`h-5 w-5 ${isAccurate ? 'text-primary' : 'text-muted-foreground'}`} />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>
-                  {accuracy ? `Accuracy: ~${Math.round(accuracy)}m` : 'Get location'}
-                  {!isAccurate && accuracy && ' (low accuracy)'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      )}
-
-      {/* Saved Routes FAB - Hidden during navigation */}
-      {!isNavigating && (
-        <Button
-          size="icon"
-          className="absolute right-4 top-20 z-10 h-12 w-12 rounded-full shadow-lg"
-          variant="secondary"
-          onClick={handleSavedClick}
-        >
-          <Heart className={`h-5 w-5 ${user && savedRouteIds.length > 0 ? "fill-primary text-primary" : ""}`} />
-        </Button>
-      )}
-
-      {/* Navigate to destination button */}
+      {/* Left side controls (hidden during navigation) */}
       <AnimatePresence>
-        {selectedDestination && !isNavigating && (
+        {config.showSideControls && (
+          <motion.div 
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -20, opacity: 0 }}
+            transition={{ duration: 0.25, delay: 0.1 }}
+            className="absolute left-4 top-20 z-10 flex flex-col gap-2"
+          >
+            <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
+            <Button
+              size="icon"
+              className="h-12 w-12 rounded-full shadow-lg"
+              variant="secondary"
+              onClick={user ? handleSignOut : () => setShowAuth(true)}
+            >
+              {user ? <LogOut className="h-5 w-5" /> : <User className="h-5 w-5" />}
+            </Button>
+            
+            {/* Recenter / Location accuracy button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    className={cn(
+                      "h-12 w-12 rounded-full shadow-lg",
+                      !isAccurate && "animate-pulse"
+                    )}
+                    variant="secondary"
+                    onClick={requestLocation}
+                    disabled={locationLoading}
+                  >
+                    {locationLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Crosshair className={cn(
+                        "h-5 w-5",
+                        isAccurate ? "text-primary" : "text-muted-foreground"
+                      )} />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>
+                    {accuracy ? `Accuracy: ~${Math.round(accuracy)}m` : 'Get location'}
+                    {!isAccurate && accuracy && ' (low accuracy)'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Saved Routes FAB (hidden during navigation) */}
+      <AnimatePresence>
+        {config.showSideControls && (
+          <motion.div
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 20, opacity: 0 }}
+            transition={{ duration: 0.25, delay: 0.1 }}
+          >
+            <Button
+              size="icon"
+              className="absolute right-4 top-20 z-10 h-12 w-12 rounded-full shadow-lg"
+              variant="secondary"
+              onClick={handleSavedClick}
+            >
+              <Heart className={cn(
+                "h-5 w-5",
+                user && savedRouteIds.length > 0 && "fill-primary text-primary"
+              )} />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Navigate to destination button (Planning state) */}
+      <AnimatePresence>
+        {selectedDestination && mapState !== "navigation" && !showPointToPoint && (
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="absolute inset-x-0 bottom-0 z-20 p-4 pb-safe-bottom"
           >
-            <div className="mx-auto max-w-md rounded-xl border border-border bg-card p-4 shadow-lg">
+            <div className="mx-auto max-w-md rounded-xl border border-border bg-card/95 backdrop-blur-md p-4 shadow-2xl">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium text-foreground">{selectedDestination.name}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground truncate">{selectedDestination.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{selectedDestination.fullAddress}</p>
                 </div>
               </div>
@@ -359,51 +425,62 @@ const Map = () => {
         )}
       </AnimatePresence>
 
-      {/* FAB Buttons Container */}
-      <div className={`absolute right-4 z-10 flex flex-col gap-3 ${isNavigating ? "bottom-8" : showPointToPoint ? "bottom-[250px]" : selectedDestination ? "bottom-40" : "bottom-24"}`}>
-        {/* SOS Emergency Button */}
-        <SOSButton userLocation={effectiveLocation} />
-
-        {/* Report FAB */}
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-        >
-          <Button
-            size="icon"
-            className="h-12 w-12 rounded-full shadow-lg bg-caution hover:bg-caution/90 text-caution-foreground"
-            onClick={() => setShowReport(true)}
-          >
-            <Flag className="h-5 w-5" />
-          </Button>
-        </motion.div>
-      </div>
-
-      {/* Bottom Quick Access (when no sheet is open and not navigating) */}
-      {showBottomUI && !selectedDestination && !showPointToPoint && (
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
-          className="absolute inset-x-0 bottom-0 z-10 p-4 pb-safe-bottom"
-        >
-          {/* Point-to-Point Route Button */}
-          <div className="mx-auto max-w-md">
-            <Button
-              className="w-full h-14 rounded-xl shadow-lg text-base font-medium"
-              onClick={() => setShowPointToPoint(true)}
-            >
-              <Navigation className="h-5 w-5 mr-3" />
-              Route between two locations
-            </Button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Point-to-Point Routing UI */}
+      {/* FAB Buttons Container (SOS + Report) */}
       <AnimatePresence>
-        {showPointToPoint && !isNavigating && (
+        {config.showFABs && (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className={cn(
+              "absolute right-4 z-10 flex flex-col gap-3",
+              showPointToPoint ? "bottom-[250px]" : 
+              selectedDestination ? "bottom-40" : "bottom-24"
+            )}
+          >
+            {/* SOS Emergency Button */}
+            <SOSButton userLocation={effectiveLocation} />
+
+            {/* Report FAB */}
+            <Button
+              size="icon"
+              className="h-12 w-12 rounded-full shadow-lg bg-caution hover:bg-caution/90 text-caution-foreground"
+              onClick={() => setShowReport(true)}
+            >
+              <Flag className="h-5 w-5" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom Quick Access - Explore state only */}
+      <AnimatePresence>
+        {showBottomUI && !selectedDestination && !showPointToPoint && (
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            transition={{ duration: 0.25, delay: 0.15 }}
+            className="absolute inset-x-0 bottom-0 z-10 p-4 pb-safe-bottom"
+          >
+            {/* Point-to-Point Route Button */}
+            <div className="mx-auto max-w-md">
+              <Button
+                className="w-full h-14 rounded-xl shadow-lg text-base font-medium"
+                onClick={handleOpenPointToPoint}
+              >
+                <Navigation className="h-5 w-5 mr-3" />
+                Route between two locations
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Point-to-Point Routing UI (Planning state) */}
+      <AnimatePresence>
+        {showPointToPoint && mapState !== "navigation" && (
           <PointToPointSheet
             isOpen={showPointToPoint}
             onClose={handleClearPointToPoint}
@@ -474,6 +551,7 @@ const Map = () => {
         onClose={() => {
           setShowRouteDetail(false);
           setSelectedRoute(null);
+          setExplore();
         }}
         mode={mode}
         onModeChange={setMode}
