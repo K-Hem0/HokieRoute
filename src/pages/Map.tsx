@@ -309,6 +309,14 @@ const Map = () => {
                   <div className="text-xs text-muted-foreground">
                     {calculatedRoute.steps.length} steps
                   </div>
+                  {/* Show routing source badge */}
+                  <div className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
+                    calculatedRoute.source === 'campus' 
+                      ? 'bg-primary/20 text-primary' 
+                      : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {calculatedRoute.source === 'campus' ? '🎓 Campus Path' : '🗺️ Road'}
+                  </div>
                 </div>
               )}
               
