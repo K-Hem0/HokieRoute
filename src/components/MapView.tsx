@@ -4,7 +4,6 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Route } from "@/lib/mock-data";
 import { SafetyHeatmapLayer } from "./map/SafetyHeatmapLayer";
-import { HeatmapToggle } from "./map/HeatmapToggle";
 import { useHeatmapData } from "@/hooks/useHeatmapData";
 
 // Blacksburg, VA center
@@ -18,6 +17,8 @@ interface MapViewProps {
   isDark?: boolean;
   destinationMarker?: [number, number] | null; // [lng, lat]
   calculatedRoute?: [number, number][] | null; // [lng, lat] pairs from OSRM
+  heatmapEnabled?: boolean;
+  onHeatmapToggle?: (enabled: boolean) => void;
 }
 
 // Custom user location icon with premium styling
@@ -173,10 +174,15 @@ const MapView = ({
   isDark = true,
   destinationMarker,
   calculatedRoute,
+  heatmapEnabled: controlledHeatmapEnabled,
+  onHeatmapToggle,
 }: MapViewProps) => {
   const [mapReady, setMapReady] = useState(false);
-  const [heatmapEnabled, setHeatmapEnabled] = useState(false);
+  const [internalHeatmapEnabled, setInternalHeatmapEnabled] = useState(false);
   const { heatmapPoints, loading: heatmapLoading } = useHeatmapData();
+  
+  // Use controlled or internal state
+  const heatmapEnabled = controlledHeatmapEnabled ?? internalHeatmapEnabled;
 
   // Convert [lng, lat] to [lat, lng] for Leaflet
   const userLatLng: [number, number] | null = userLocation
@@ -300,14 +306,6 @@ const MapView = ({
         />
       )}
 
-      {/* Heatmap toggle button - positioned bottom-left above zoom controls */}
-      <div className="absolute bottom-28 left-4" style={{ zIndex: 1000 }}>
-        <HeatmapToggle
-          enabled={heatmapEnabled}
-          onToggle={() => setHeatmapEnabled(!heatmapEnabled)}
-          loading={heatmapLoading}
-        />
-      </div>
     </div>
   );
 };
