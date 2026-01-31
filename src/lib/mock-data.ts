@@ -1,5 +1,14 @@
 export type SafetyLevel = 'safe' | 'moderate' | 'caution';
 
+export type BadgeType = 'feature' | 'verified' | 'safety';
+
+export interface RouteBadge {
+  id: string;
+  label: string;
+  icon: string;
+  type: BadgeType;
+}
+
 export interface Route {
   id: string;
   name: string;
@@ -13,6 +22,7 @@ export interface Route {
   start_point: [number, number];
   end_point: [number, number];
   thumbnail_url?: string;
+  badges: RouteBadge[];
 }
 
 export const mockRoutes: Route[] = [
@@ -36,6 +46,11 @@ export const mockRoutes: Route[] = [
     ],
     start_point: [-0.1278, 51.5074],
     end_point: [-0.1278, 51.5074],
+    badges: [
+      { id: 'b1', label: 'Well-lit', icon: 'Lightbulb', type: 'feature' },
+      { id: 'b2', label: 'Community verified', icon: 'CheckCircle', type: 'verified' },
+      { id: 'b3', label: 'Near help', icon: 'Phone', type: 'safety' },
+    ],
   },
   {
     id: '2',
@@ -57,6 +72,10 @@ export const mockRoutes: Route[] = [
     ],
     start_point: [-0.1350, 51.5080],
     end_point: [-0.1350, 51.5080],
+    badges: [
+      { id: 'b4', label: 'Fewer crossings', icon: 'ArrowRight', type: 'feature' },
+      { id: 'b5', label: 'Community verified', icon: 'CheckCircle', type: 'verified' },
+    ],
   },
   {
     id: '3',
@@ -78,6 +97,10 @@ export const mockRoutes: Route[] = [
     ],
     start_point: [-0.1220, 51.5050],
     end_point: [-0.1220, 51.5050],
+    badges: [
+      { id: 'b6', label: 'Scenic route', icon: 'Camera', type: 'feature' },
+      { id: 'b7', label: 'Near help', icon: 'Phone', type: 'safety' },
+    ],
   },
   {
     id: '4',
@@ -99,6 +122,10 @@ export const mockRoutes: Route[] = [
     ],
     start_point: [-0.0200, 51.5050],
     end_point: [-0.0200, 51.5050],
+    badges: [
+      { id: 'b8', label: 'Well-lit', icon: 'Lightbulb', type: 'feature' },
+      { id: 'b9', label: 'Fewer crossings', icon: 'ArrowRight', type: 'feature' },
+    ],
   },
   {
     id: '5',
@@ -120,6 +147,9 @@ export const mockRoutes: Route[] = [
     ],
     start_point: [-0.0800, 51.5150],
     end_point: [-0.0800, 51.5150],
+    badges: [
+      { id: 'b10', label: 'Scenic route', icon: 'Camera', type: 'feature' },
+    ],
   },
 ];
 

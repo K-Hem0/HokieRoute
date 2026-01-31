@@ -7,22 +7,24 @@ import { RouteDetailSheet } from "@/components/RouteDetailSheet";
 import { BottomSheet } from "@/components/BottomSheet";
 import { AuthSheet } from "@/components/AuthSheet";
 import { SavedRoutesSheet } from "@/components/SavedRoutesSheet";
+import { ReportModal } from "@/components/ReportModal";
 import { Route } from "@/lib/mock-data";
 import { useRoutes } from "@/hooks/useRoutes";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
-import { Heart, Search, User, LogOut, Loader2 } from "lucide-react";
+import { Heart, Search, User, LogOut, Loader2, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-const Index = () => {
+const Map = () => {
   const [mode, setMode] = useState<Mode>("walk");
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [showRouteDetail, setShowRouteDetail] = useState(false);
   const [showDiscovery, setShowDiscovery] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const { routes, loading: routesLoading } = useRoutes();
@@ -118,6 +120,22 @@ const Index = () => {
       >
         <Heart className={`h-5 w-5 ${user && savedRouteIds.length > 0 ? "fill-primary text-primary" : ""}`} />
       </Button>
+
+      {/* Report FAB */}
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+        className="absolute right-4 bottom-[280px] z-10"
+      >
+        <Button
+          size="icon"
+          className="h-14 w-14 rounded-full shadow-lg bg-caution hover:bg-caution/90 text-caution-foreground"
+          onClick={() => setShowReport(true)}
+        >
+          <Flag className="h-6 w-6" />
+        </Button>
+      </motion.div>
 
       {/* Bottom Quick Access (when no sheet is open) */}
       {!showDiscovery && !showRouteDetail && !showSaved && (
@@ -244,8 +262,14 @@ const Index = () => {
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
       />
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReport}
+        onClose={() => setShowReport(false)}
+      />
     </div>
   );
 };
 
-export default Index;
+export default Map;

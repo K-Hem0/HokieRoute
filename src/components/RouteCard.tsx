@@ -1,8 +1,10 @@
 import { Route } from "@/lib/mock-data";
 import { SafetyBadge } from "@/components/ui/SafetyBadge";
-import { MapPin, Clock, ChevronRight } from "lucide-react";
+import { FeatureBadge } from "@/components/ui/FeatureBadge";
+import { MapPin, Clock, ChevronRight, Lightbulb, CheckCircle, Phone, ArrowRight, Camera } from "lucide-react";
 import { Mode } from "@/components/ui/ModeToggle";
 import { cn } from "@/lib/utils";
+import { LucideIcon } from "lucide-react";
 
 interface RouteCardProps {
   route: Route;
@@ -10,6 +12,14 @@ interface RouteCardProps {
   onClick?: () => void;
   variant?: "compact" | "full";
 }
+
+const iconMap: Record<string, LucideIcon> = {
+  Lightbulb,
+  CheckCircle,
+  Phone,
+  ArrowRight,
+  Camera,
+};
 
 const RouteCard = ({ route, mode, onClick, variant = "compact" }: RouteCardProps) => {
   const duration = mode === 'walk' ? route.duration_walk_min : route.duration_cycle_min;
@@ -46,8 +56,22 @@ const RouteCard = ({ route, mode, onClick, variant = "compact" }: RouteCardProps
             </span>
           </div>
 
+          {/* Feature Badges */}
+          {route.badges && route.badges.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {route.badges.slice(0, 3).map((badge) => (
+                <FeatureBadge
+                  key={badge.id}
+                  label={badge.label}
+                  icon={iconMap[badge.icon]}
+                  variant={badge.type === 'verified' ? 'verified' : badge.type === 'safety' ? 'safety' : 'default'}
+                />
+              ))}
+            </div>
+          )}
+
           {variant === "full" && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-sm text-muted-foreground line-clamp-2 pt-1">
               {route.description}
             </p>
           )}
