@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { searchCampusBuildings, CampusBuilding } from "@/lib/campus-buildings";
 
 // Blacksburg, VA center and bounding box for Nominatim search
 const BLACKSBURG_CENTER = { lat: 37.2296, lon: -80.4139 };
@@ -11,19 +10,6 @@ export interface PlaceResult {
   fullAddress: string;
   coordinates: [number, number]; // [lng, lat]
   category?: string;
-  isLocal?: boolean; // Flag for local campus buildings
-}
-
-// Convert campus building to PlaceResult
-function campusBuildingToPlaceResult(building: CampusBuilding): PlaceResult {
-  return {
-    id: `campus-${building.id}`,
-    name: building.name,
-    fullAddress: building.address,
-    coordinates: building.coordinates,
-    category: building.category,
-    isLocal: true,
-  };
 }
 
 /**
@@ -36,7 +22,6 @@ function nominatimToPlaceResult(item: any): PlaceResult {
     fullAddress: item.display_name,
     coordinates: [parseFloat(item.lon), parseFloat(item.lat)],
     category: item.type || item.class,
-    isLocal: false,
   };
 }
 
@@ -68,15 +53,12 @@ export const usePlaceSearch = () => {
     setError(null);
 
     try {
-      // First, search local campus buildings (instant, highest priority)
-      const localResults = searchCampusBuildings(query).map(campusBuildingToPlaceResult);
-
-      // Then fetch from Nominatim (OpenStreetMap geocoder)
+      // Fetch from Nominatim (OpenStreetMap geocoder)
       const url = new URL("https://nominatim.openstreetmap.org/search");
-      url.searchParams.set("q", query);
+      url.searchParams.set("q", query + " Blacksburg VA");
       url.searchParams.set("format", "json");
       url.searchParams.set("addressdetails", "1");
-      url.searchParams.set("limit", "5");
+      url.searchParams.set("limit", "6");
       url.searchParams.set("viewbox", BLACKSBURG_VIEWBOX);
       url.searchParams.set("bounded", "1"); // Strictly limit to viewbox
       url.searchParams.set("countrycodes", "us");
@@ -84,7 +66,6 @@ export const usePlaceSearch = () => {
       const response = await fetch(url.toString(), {
         headers: {
           "Accept": "application/json",
-          // Nominatim requires a User-Agent
           "User-Agent": "SafeRouteApp/1.0",
         },
       });
@@ -106,26 +87,10 @@ export const usePlaceSearch = () => {
           });
       }
 
-      // Combine results: local first, then OSM (deduplicated by rough location)
-      const combined = [...localResults];
-      for (const osmResult of osmResults) {
-        // Skip if we already have a local result at roughly the same location
-        const isDuplicate = localResults.some((local) => {
-          const [lng1, lat1] = local.coordinates;
-          const [lng2, lat2] = osmResult.coordinates;
-          return Math.abs(lng1 - lng2) < 0.001 && Math.abs(lat1 - lat2) < 0.001;
-        });
-        if (!isDuplicate) {
-          combined.push(osmResult);
-        }
-      }
-
-      setResults(combined.slice(0, 6)); // Limit total results
+      setResults(osmResults.slice(0, 6));
     } catch (err: any) {
       setError(err.message);
-      // Even on error, show local results
-      const localResults = searchCampusBuildings(query).map(campusBuildingToPlaceResult);
-      setResults(localResults);
+      setResults([]);
     } finally {
       setLoading(false);
     }
