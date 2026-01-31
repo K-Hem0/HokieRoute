@@ -10,6 +10,7 @@ import { AuthSheet } from "@/components/AuthSheet";
 import { SavedRoutesSheet } from "@/components/SavedRoutesSheet";
 import { ReportModal } from "@/components/ReportModal";
 import { NavigationStatusBar } from "@/components/NavigationStatusBar";
+import { PointToPointSheet } from "@/components/PointToPointSheet";
 import { Route } from "@/lib/mock-data";
 import { useRoutes } from "@/hooks/useRoutes";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,7 +19,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
 import { useRouting, formatDistance, formatDuration } from "@/hooks/useRouting";
-import { Heart, Search, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair } from "lucide-react";
+import { Heart, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,9 +41,6 @@ const Map = () => {
   // Point-to-point routing state
   const [routeOrigin, setRouteOrigin] = useState<PlaceResult | null>(null);
   const [showPointToPoint, setShowPointToPoint] = useState(false);
-  const [originSearchQuery, setOriginSearchQuery] = useState("");
-  const [destSearchQuery, setDestSearchQuery] = useState("");
-  const [activeSearchField, setActiveSearchField] = useState<"origin" | "destination">("origin");
 
   const { routes, loading: routesLoading } = useRoutes();
   const { user, signOut } = useAuth();
@@ -137,49 +135,17 @@ const Map = () => {
     }
   };
 
-  // Point-to-point routing
-  const handlePointToPointRoute = async () => {
-    if (!routeOrigin || !selectedDestination) return;
-    
-    const result = await calculateRoute(routeOrigin.coordinates, selectedDestination.coordinates);
-    
-    if (result) {
-      toast.success(`Route found: ${formatDistance(result.distance)} • ${formatDuration(result.duration)}`);
-      setShowPointToPoint(false);
-    } else {
-      toast.error("Could not calculate route. Try different locations.");
-    }
-  };
-
-  const handlePointToPointPlaceSelect = async (place: PlaceResult) => {
-    let newOrigin = routeOrigin;
-    let newDestination = selectedDestination;
-    
-    if (activeSearchField === "origin") {
-      setRouteOrigin(place);
-      setOriginSearchQuery(place.name);
-      newOrigin = place;
-    } else {
-      setSelectedDestination(place);
-      setDestSearchQuery(place.name);
-      newDestination = place;
-    }
-    clearResults();
-    
-    // Auto-calculate route when both locations are set
-    if (newOrigin && newDestination) {
-      const result = await calculateRoute(newOrigin.coordinates, newDestination.coordinates);
-      if (result) {
-        toast.success(`${formatDistance(result.distance)} • ${formatDuration(result.duration)}`);
-      }
-    }
+  // Point-to-point routing completed
+  const handlePointToPointComplete = (origin: PlaceResult, destination: PlaceResult) => {
+    setRouteOrigin(origin);
+    setSelectedDestination(destination);
+    setShowPointToPoint(false);
+    toast.success("Route ready - tap Start Navigation to begin");
   };
 
   const handleClearPointToPoint = () => {
     setRouteOrigin(null);
     setSelectedDestination(null);
-    setOriginSearchQuery("");
-    setDestSearchQuery("");
     setShowPointToPoint(false);
     clearRoute();
   };
@@ -431,129 +397,14 @@ const Map = () => {
       {/* Point-to-Point Routing UI */}
       <AnimatePresence>
         {showPointToPoint && !isNavigating && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="absolute inset-x-0 bottom-0 z-20 p-4 pb-safe-bottom"
-          >
-            <div className="mx-auto max-w-md rounded-xl border border-border bg-card p-4 shadow-lg space-y-3">
-              <h3 className="text-sm font-medium text-foreground mb-2">Plan your walk</h3>
-              
-              {/* Origin input */}
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary" />
-                <input
-                  type="text"
-                  value={originSearchQuery}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setOriginSearchQuery(val);
-                    setActiveSearchField("origin");
-                    // Debounce search internally
-                    if (val.length >= 2) {
-                      searchPlaces(val);
-                    } else {
-                      clearResults();
-                    }
-                  }}
-                  onFocus={() => {
-                    setActiveSearchField("origin");
-                    // Re-trigger search on focus if there's text
-                    if (originSearchQuery.length >= 2) {
-                      searchPlaces(originSearchQuery);
-                    }
-                  }}
-                  placeholder="Starting point"
-                  className="w-full h-12 pl-9 pr-4 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-              
-              {/* Destination input */}
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                  <MapPin className="h-4 w-4 text-primary" />
-                </div>
-                <input
-                  type="text"
-                  value={destSearchQuery}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setDestSearchQuery(val);
-                    setActiveSearchField("destination");
-                    if (val.length >= 2) {
-                      searchPlaces(val);
-                    } else {
-                      clearResults();
-                    }
-                  }}
-                  onFocus={() => {
-                    setActiveSearchField("destination");
-                    // Re-trigger search on focus if there's text
-                    if (destSearchQuery.length >= 2) {
-                      searchPlaces(destSearchQuery);
-                    }
-                  }}
-                  placeholder="Destination"
-                  className="w-full h-12 pl-9 pr-4 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-
-              {/* Search results */}
-              {(placeResults.length > 0 || placesLoading) && (
-                <div className="max-h-40 overflow-y-auto rounded-lg border border-border bg-background">
-                  {placesLoading ? (
-                    <div className="flex items-center justify-center gap-2 p-4 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Searching...
-                    </div>
-                  ) : (
-                    placeResults.map((place) => (
-                      <button
-                        key={place.id}
-                        onClick={() => handlePointToPointPlaceSelect(place)}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-secondary transition-colors text-left"
-                      >
-                        <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{place.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{place.fullAddress}</p>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {/* Route info if calculated */}
-              {calculatedRoute && routeOrigin && selectedDestination && (
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-secondary/50">
-                  <div className="text-sm font-medium">{formatDistance(calculatedRoute.distance)}</div>
-                  <div className="text-sm font-medium">{formatDuration(calculatedRoute.duration)}</div>
-                  <div className="text-xs text-muted-foreground">{calculatedRoute.steps.length} steps</div>
-                </div>
-              )}
-
-              {/* Action buttons */}
-              <div className="flex gap-2 pt-1">
-                <Button variant="outline" className="flex-1" onClick={handleClearPointToPoint}>
-                  Cancel
-                </Button>
-                <Button 
-                  className="flex-1" 
-                  onClick={handlePointToPointRoute}
-                  disabled={!routeOrigin || !selectedDestination || routeLoading}
-                >
-                  {routeLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Navigation className="h-4 w-4 mr-2" />
-                  )}
-                  Get Route
-                </Button>
-              </div>
-            </div>
-          </motion.div>
+          <PointToPointSheet
+            isOpen={showPointToPoint}
+            onClose={handleClearPointToPoint}
+            onRouteCalculated={handlePointToPointComplete}
+            calculatedRoute={calculatedRoute}
+            routeLoading={routeLoading}
+            calculateRoute={calculateRoute}
+          />
         )}
       </AnimatePresence>
 
