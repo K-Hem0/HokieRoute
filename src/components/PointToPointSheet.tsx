@@ -123,16 +123,16 @@ export const PointToPointSheet = ({
     >
       <div className="mx-4 mb-4 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
         
-        {/* Header Section */}
+        {/* Header section - 16px padding */}
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-base font-semibold text-foreground">Plan your walk</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Blacksburg • Walking</p>
+              <h3 className="text-base font-semibold text-foreground tracking-tight">Plan your walk</h3>
+              <p className="text-xs text-muted-foreground/70 mt-1">Blacksburg · Walking</p>
             </div>
             <button
               onClick={handleClear}
-              className="p-1.5 -mr-1 -mt-1 rounded-full hover:bg-secondary transition-colors"
+              className="p-2 -mr-2 -mt-1 rounded-full hover:bg-secondary transition-colors"
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -165,7 +165,7 @@ export const PointToPointSheet = ({
                     placeholder="Starting point"
                     className={cn(
                       "w-full h-10 px-3 rounded-lg border text-sm transition-all",
-                      "placeholder:text-muted-foreground focus:outline-none",
+                      "placeholder:text-muted-foreground/50 focus:outline-none",
                       activeField === "origin"
                         ? "border-primary/50 ring-1 ring-primary/20 bg-background"
                         : "border-transparent bg-background/60 hover:bg-background",
@@ -199,7 +199,7 @@ export const PointToPointSheet = ({
                     placeholder="Where to?"
                     className={cn(
                       "w-full h-10 px-3 rounded-lg border text-sm transition-all",
-                      "placeholder:text-muted-foreground focus:outline-none",
+                      "placeholder:text-muted-foreground/50 focus:outline-none",
                       activeField === "destination"
                         ? "border-primary/50 ring-1 ring-primary/20 bg-background"
                         : "border-transparent bg-background/60 hover:bg-background",
@@ -291,19 +291,19 @@ export const PointToPointSheet = ({
               className="overflow-hidden"
             >
               <div className="px-4 pb-4">
-                <div className="flex items-center justify-center gap-6 py-2">
+                <div className="flex items-center justify-center gap-8 py-3">
                   <div className="text-center">
-                    <p className="text-lg font-semibold text-foreground tabular-nums">
+                    <p className="text-lg font-semibold text-foreground tabular-nums tracking-tight">
                       {formatDistance(calculatedRoute.distance)}
                     </p>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">distance</p>
+                    <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">Distance</p>
                   </div>
                   <div className="h-8 w-px bg-border" />
                   <div className="text-center">
-                    <p className="text-lg font-semibold text-foreground tabular-nums">
+                    <p className="text-lg font-semibold text-foreground tabular-nums tracking-tight">
                       {formatDuration(calculatedRoute.duration)}
                     </p>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">walking</p>
+                    <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">Walking</p>
                   </div>
                 </div>
               </div>
