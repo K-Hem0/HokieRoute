@@ -2,32 +2,40 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Users, Bell, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useTheme } from "@/hooks/useTheme";
 
 const features = [
   {
     icon: Shield,
     title: "AI Safety Scores",
-    description: "Real-time safety analysis powered by local crime data and community insights.",
+    description: "Real-time safety analysis powered by local data and community insights.",
   },
   {
     icon: Users,
     title: "Community Reports",
-    description: "Crowdsourced updates on hazards, lighting issues, and route conditions.",
+    description: "Crowdsourced updates on hazards, lighting, and route conditions.",
   },
   {
     icon: Bell,
     title: "Real-time Alerts",
-    description: "Instant notifications about incidents and changing conditions on your route.",
+    description: "Instant notifications about incidents on your route.",
   },
 ];
 
 const Landing = () => {
   const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
 
   return (
-    <div className="relative min-h-screen bg-background dark overflow-hidden">
+    <div className="relative min-h-screen bg-background overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
+      
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
+      </div>
       
       {/* Hero Section */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-6 pt-16 pb-8">
@@ -37,12 +45,20 @@ const Landing = () => {
           transition={{ duration: 0.6 }}
           className="text-center max-w-2xl mx-auto"
         >
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-sm text-primary font-medium mb-4"
+          >
+            Built for Blacksburg
+          </motion.p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight mb-4">
             Walk safer.{" "}
             <span className="text-primary">Ride smarter.</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-lg mx-auto">
-            AI-powered route planning with real-time safety insights for walkers and cyclists.
+            AI-powered route planning with real-time safety insights around Virginia Tech and downtown.
           </p>
           
           <motion.div
@@ -95,9 +111,12 @@ const Landing = () => {
                     />
                   </g>
                 ))}
-                {/* Mock route */}
-                <path
-                  d="M 20 80 Q 30 60 45 55 T 70 40 T 80 25"
+                {/* Mock route - Drillfield shape */}
+                <ellipse
+                  cx="50"
+                  cy="50"
+                  rx="25"
+                  ry="15"
                   fill="none"
                   stroke="hsl(var(--primary))"
                   strokeWidth="2"
@@ -105,10 +124,15 @@ const Landing = () => {
                   className="animate-pulse"
                 />
                 {/* Start point */}
-                <circle cx="20" cy="80" r="3" fill="hsl(var(--safe))" />
+                <circle cx="25" cy="50" r="3" fill="hsl(var(--safe))" />
                 {/* End point */}
-                <circle cx="80" cy="25" r="3" fill="hsl(var(--primary))" />
+                <circle cx="75" cy="50" r="3" fill="hsl(var(--primary))" />
               </svg>
+            </div>
+            
+            {/* Location label */}
+            <div className="absolute bottom-4 left-4 text-xs text-muted-foreground">
+              Blacksburg, VA
             </div>
             
             {/* Overlay gradient */}
@@ -153,7 +177,7 @@ const Landing = () => {
       <footer className="relative z-10 px-6 py-8 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-sm font-semibold text-foreground">SafeRoute</span>
-          <span className="text-xs text-muted-foreground">Made with care</span>
+          <span className="text-xs text-muted-foreground">Made for Hokies</span>
         </div>
       </footer>
     </div>

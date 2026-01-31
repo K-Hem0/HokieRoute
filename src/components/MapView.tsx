@@ -6,18 +6,30 @@ import { Route } from "@/lib/mock-data";
 // Public Mapbox token - this is a publishable key
 const MAPBOX_TOKEN = "pk.eyJ1IjoibG92YWJsZS1kZW1vIiwiYSI6ImNtYmhxcW44cjA0cGYyanNkYjQ3cTNrcWMifQ.to60WE2Ma41bIrlxUJcIQQ";
 
+// Blacksburg, VA center
+const BLACKSBURG_CENTER: [number, number] = [-80.4139, 37.2296];
+
 interface MapViewProps {
   selectedRoute?: Route | null;
   onMapClick?: () => void;
   userLocation?: [number, number];
+  isNavigating?: boolean;
+  isDark?: boolean;
 }
 
-const MapView = ({ selectedRoute, onMapClick, userLocation }: MapViewProps) => {
+const MapView = ({ 
+  selectedRoute, 
+  onMapClick, 
+  userLocation, 
+  isNavigating = false,
+  isDark = true 
+}: MapViewProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const routeLayerId = useRef<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
+  // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
@@ -25,9 +37,9 @@ const MapView = ({ selectedRoute, onMapClick, userLocation }: MapViewProps) => {
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/dark-v11",
-      center: userLocation || [-0.1278, 51.5074],
-      zoom: 13,
+      style: isDark ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11",
+      center: userLocation || BLACKSBURG_CENTER,
+      zoom: 14,
       attributionControl: false,
     });
 
@@ -51,6 +63,65 @@ const MapView = ({ selectedRoute, onMapClick, userLocation }: MapViewProps) => {
     };
   }, []);
 
+  // Update map style when theme changes
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+    
+    const newStyle = isDark 
+      ? "mapbox://styles/mapbox/dark-v11" 
+      : "mapbox://styles/mapbox/light-v11";
+    
+    map.current.setStyle(newStyle);
+    
+    // Re-add route after style change
+    map.current.once("style.load", () => {
+      if (selectedRoute && routeLayerId.current) {
+        addRouteToMap(selectedRoute);
+      }
+    });
+  }, [isDark, mapLoaded]);
+
+  const addRouteToMap = (route: Route) => {
+    if (!map.current) return;
+
+    const sourceId = `route-${route.id}`;
+    routeLayerId.current = sourceId;
+
+    // Check if source already exists
+    if (map.current.getSource(sourceId)) {
+      map.current.removeLayer(sourceId);
+      map.current.removeSource(sourceId);
+    }
+
+    // Add route source and layer
+    map.current.addSource(sourceId, {
+      type: "geojson",
+      data: {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: route.coordinates,
+        },
+      },
+    });
+
+    map.current.addLayer({
+      id: sourceId,
+      type: "line",
+      source: sourceId,
+      layout: {
+        "line-join": "round",
+        "line-cap": "round",
+      },
+      paint: {
+        "line-color": isNavigating ? "#8B5CF6" : "#8B5CF6",
+        "line-width": isNavigating ? 6 : 4,
+        "line-opacity": isNavigating ? 1 : 0.8,
+      },
+    });
+  };
+
   // Handle route display
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
@@ -67,36 +138,7 @@ const MapView = ({ selectedRoute, onMapClick, userLocation }: MapViewProps) => {
 
     if (!selectedRoute) return;
 
-    const sourceId = `route-${selectedRoute.id}`;
-    routeLayerId.current = sourceId;
-
-    // Add route source and layer
-    map.current.addSource(sourceId, {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "LineString",
-          coordinates: selectedRoute.coordinates,
-        },
-      },
-    });
-
-    map.current.addLayer({
-      id: sourceId,
-      type: "line",
-      source: sourceId,
-      layout: {
-        "line-join": "round",
-        "line-cap": "round",
-      },
-      paint: {
-        "line-color": "#8B5CF6",
-        "line-width": 4,
-        "line-opacity": 0.8,
-      },
-    });
+    addRouteToMap(selectedRoute);
 
     // Fit map to route bounds
     const bounds = selectedRoute.coordinates.reduce(
@@ -107,14 +149,33 @@ const MapView = ({ selectedRoute, onMapClick, userLocation }: MapViewProps) => {
       )
     );
 
+    const padding = isNavigating 
+      ? { top: 150, bottom: 100, left: 50, right: 50 }
+      : { top: 100, bottom: 300, left: 50, right: 50 };
+
     map.current.fitBounds(bounds, {
-      padding: { top: 100, bottom: 300, left: 50, right: 50 },
+      padding,
       duration: 500,
     });
-  }, [selectedRoute, mapLoaded]);
+  }, [selectedRoute, mapLoaded, isNavigating]);
+
+  // Update route style when navigation state changes
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !routeLayerId.current) return;
+    
+    if (map.current.getLayer(routeLayerId.current)) {
+      map.current.setPaintProperty(routeLayerId.current, "line-width", isNavigating ? 6 : 4);
+      map.current.setPaintProperty(routeLayerId.current, "line-opacity", isNavigating ? 1 : 0.8);
+    }
+  }, [isNavigating, mapLoaded]);
 
   return (
-    <div ref={mapContainer} className="absolute inset-0" />
+    <div 
+      ref={mapContainer} 
+      className={`absolute inset-0 transition-opacity duration-300 ${
+        isNavigating ? "" : ""
+      }`} 
+    />
   );
 };
 

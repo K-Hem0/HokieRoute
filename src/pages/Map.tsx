@@ -1,20 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapView } from "@/components/MapView";
 import { PillInput } from "@/components/ui/PillInput";
 import { ModeToggle, Mode } from "@/components/ui/ModeToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { RouteCard } from "@/components/RouteCard";
 import { RouteDetailSheet } from "@/components/RouteDetailSheet";
 import { BottomSheet } from "@/components/BottomSheet";
 import { AuthSheet } from "@/components/AuthSheet";
 import { SavedRoutesSheet } from "@/components/SavedRoutesSheet";
 import { ReportModal } from "@/components/ReportModal";
+import { NavigationStatusBar } from "@/components/NavigationStatusBar";
 import { Route } from "@/lib/mock-data";
 import { useRoutes } from "@/hooks/useRoutes";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
+import { useTheme } from "@/hooks/useTheme";
 import { Heart, Search, User, LogOut, Loader2, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 const Map = () => {
@@ -26,16 +29,41 @@ const Map = () => {
   const [showSaved, setShowSaved] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [navElapsedMin, setNavElapsedMin] = useState(0);
 
   const { routes, loading: routesLoading } = useRoutes();
   const { user, signOut } = useAuth();
   const { savedRouteIds, toggleSaveRoute, unsaveRoute, isRouteSaved } = useSavedRoutes();
+  const { isDark, toggleTheme } = useTheme();
 
   const nearbyRoutes = routes.slice(0, 3);
   
   const filteredRoutes = routes.filter((route) =>
     route.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Simulate navigation progress
+  useEffect(() => {
+    if (!isNavigating || !selectedRoute) return;
+
+    const totalDuration = mode === 'walk' 
+      ? selectedRoute.duration_walk_min 
+      : selectedRoute.duration_cycle_min;
+
+    const interval = setInterval(() => {
+      setNavElapsedMin((prev) => {
+        if (prev >= totalDuration) {
+          setIsNavigating(false);
+          toast.success("You've arrived at your destination!");
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 3000); // Speed up for demo: 3 seconds = 1 minute
+
+    return () => clearInterval(interval);
+  }, [isNavigating, selectedRoute, mode]);
 
   const handleRouteSelect = (route: Route) => {
     setSelectedRoute(route);
@@ -56,7 +84,18 @@ const Map = () => {
   };
 
   const handleStartRoute = () => {
-    toast.info("Navigation coming soon!");
+    if (!selectedRoute) return;
+    setShowRouteDetail(false);
+    setIsNavigating(true);
+    setNavElapsedMin(0);
+    toast.success("Navigation started");
+  };
+
+  const handleStopNavigation = () => {
+    setIsNavigating(false);
+    setNavElapsedMin(0);
+    setSelectedRoute(null);
+    toast.info("Navigation ended");
   };
 
   const handleSavedClick = () => {
@@ -72,61 +111,86 @@ const Map = () => {
     toast.success("Signed out successfully");
   };
 
+  const showBottomUI = !showDiscovery && !showRouteDetail && !showSaved && !isNavigating;
+
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-background dark">
+    <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Map */}
       <MapView
         selectedRoute={selectedRoute}
+        isNavigating={isNavigating}
+        isDark={isDark}
         onMapClick={() => {
-          if (!showDiscovery && !showRouteDetail && !showSaved) {
+          if (!showDiscovery && !showRouteDetail && !showSaved && !isNavigating) {
             setSelectedRoute(null);
           }
         }}
       />
 
-      {/* Top Overlay */}
-      <div className="absolute inset-x-0 top-0 z-10 p-4 pt-safe">
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <PillInput
-            placeholder="Where are you going?"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setShowDiscovery(true)}
-            icon={<Search className="h-5 w-5 text-muted-foreground" />}
+      {/* Navigation Status Bar */}
+      <AnimatePresence>
+        {isNavigating && selectedRoute && (
+          <NavigationStatusBar
+            route={selectedRoute}
+            mode={mode}
+            onStop={handleStopNavigation}
+            elapsedMin={navElapsedMin}
           />
-        </motion.div>
-      </div>
+        )}
+      </AnimatePresence>
 
-      {/* User/Auth Button */}
-      <Button
-        size="icon"
-        className="absolute left-4 top-20 z-10 h-12 w-12 rounded-full shadow-lg"
-        variant="secondary"
-        onClick={user ? handleSignOut : () => setShowAuth(true)}
-      >
-        {user ? <LogOut className="h-5 w-5" /> : <User className="h-5 w-5" />}
-      </Button>
+      {/* Top Overlay - Hidden during navigation */}
+      {!isNavigating && (
+        <div className="absolute inset-x-0 top-0 z-10 p-4 pt-safe">
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <PillInput
+              placeholder="Where in Blacksburg?"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setShowDiscovery(true)}
+              icon={<Search className="h-5 w-5 text-muted-foreground" />}
+            />
+          </motion.div>
+        </div>
+      )}
 
-      {/* Saved Routes FAB */}
-      <Button
-        size="icon"
-        className="absolute right-4 top-20 z-10 h-12 w-12 rounded-full shadow-lg"
-        variant="secondary"
-        onClick={handleSavedClick}
-      >
-        <Heart className={`h-5 w-5 ${user && savedRouteIds.length > 0 ? "fill-primary text-primary" : ""}`} />
-      </Button>
+      {/* Left side controls - Hidden during navigation */}
+      {!isNavigating && (
+        <div className="absolute left-4 top-20 z-10 flex flex-col gap-2">
+          <Button
+            size="icon"
+            className="h-12 w-12 rounded-full shadow-lg"
+            variant="secondary"
+            onClick={user ? handleSignOut : () => setShowAuth(true)}
+          >
+            {user ? <LogOut className="h-5 w-5" /> : <User className="h-5 w-5" />}
+          </Button>
+          <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
+        </div>
+      )}
 
-      {/* Report FAB */}
+      {/* Saved Routes FAB - Hidden during navigation */}
+      {!isNavigating && (
+        <Button
+          size="icon"
+          className="absolute right-4 top-20 z-10 h-12 w-12 rounded-full shadow-lg"
+          variant="secondary"
+          onClick={handleSavedClick}
+        >
+          <Heart className={`h-5 w-5 ${user && savedRouteIds.length > 0 ? "fill-primary text-primary" : ""}`} />
+        </Button>
+      )}
+
+      {/* Report FAB - Always visible but positioned based on nav state */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-        className="absolute right-4 bottom-[280px] z-10"
+        className={`absolute right-4 z-10 ${isNavigating ? "bottom-8" : "bottom-[280px]"}`}
       >
         <Button
           size="icon"
@@ -137,8 +201,8 @@ const Map = () => {
         </Button>
       </motion.div>
 
-      {/* Bottom Quick Access (when no sheet is open) */}
-      {!showDiscovery && !showRouteDetail && !showSaved && (
+      {/* Bottom Quick Access (when no sheet is open and not navigating) */}
+      {showBottomUI && (
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -153,7 +217,7 @@ const Map = () => {
           {/* Nearby Routes */}
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-medium text-foreground">Nearby Routes</h3>
+              <h3 className="text-sm font-medium text-foreground">Around campus</h3>
               <button
                 onClick={() => setShowDiscovery(true)}
                 className="text-xs text-primary hover:underline"
@@ -188,13 +252,13 @@ const Map = () => {
           setShowDiscovery(false);
           setSearchQuery("");
         }}
-        title="Discover Routes"
+        title="Explore Blacksburg"
         snapPoints={[0.6, 0.9]}
       >
         <div className="space-y-4 py-4">
           {/* Search */}
           <PillInput
-            placeholder="Search routes..."
+            placeholder="Campus, downtown, trails..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="mb-2"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Route, SafetyLevel, RouteBadge } from "@/lib/mock-data";
+import { Route, SafetyLevel, RouteBadge, mockRoutes } from "@/lib/mock-data";
 
 // Default badges based on safety score for routes without explicit badges
 const getDefaultBadges = (safetyScore: SafetyLevel): RouteBadge[] => {
@@ -35,30 +35,35 @@ export const useRoutes = () => {
 
         if (error) throw error;
 
-        // Transform database format to Route type
-        const transformedRoutes: Route[] = (data || []).map((route) => {
-          const safetyScore = route.safety_score as SafetyLevel;
-          return {
-            id: route.id,
-            name: route.name,
-            description: route.description || "",
-            distance_km: Number(route.distance_km),
-            duration_walk_min: route.duration_walk_min,
-            duration_cycle_min: route.duration_cycle_min,
-            safety_score: safetyScore,
-            safety_insight: route.safety_insight || "",
-            coordinates: route.coordinates as [number, number][],
-            start_point: route.start_point as [number, number],
-            end_point: route.end_point as [number, number],
-            thumbnail_url: route.thumbnail_url || undefined,
-            badges: getDefaultBadges(safetyScore),
-          };
-        });
-
-        setRoutes(transformedRoutes);
+        // If database has routes, use them; otherwise use mock data
+        if (data && data.length > 0) {
+          const transformedRoutes: Route[] = data.map((route) => {
+            const safetyScore = route.safety_score as SafetyLevel;
+            return {
+              id: route.id,
+              name: route.name,
+              description: route.description || "",
+              distance_km: Number(route.distance_km),
+              duration_walk_min: route.duration_walk_min,
+              duration_cycle_min: route.duration_cycle_min,
+              safety_score: safetyScore,
+              safety_insight: route.safety_insight || "",
+              coordinates: route.coordinates as [number, number][],
+              start_point: route.start_point as [number, number],
+              end_point: route.end_point as [number, number],
+              thumbnail_url: route.thumbnail_url || undefined,
+              badges: getDefaultBadges(safetyScore),
+            };
+          });
+          setRoutes(transformedRoutes);
+        } else {
+          // Use Blacksburg-specific mock data
+          setRoutes(mockRoutes);
+        }
       } catch (err: any) {
-        setError(err.message);
-        console.error("Error fetching routes:", err);
+        // Fallback to mock data on error
+        console.warn("Using mock data:", err.message);
+        setRoutes(mockRoutes);
       } finally {
         setLoading(false);
       }

@@ -38,6 +38,9 @@ const RouteDetailSheet = ({
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-foreground">{route.name}</h2>
+              {route.contextLabel && (
+                <p className="text-xs text-primary font-medium">{route.contextLabel}</p>
+              )}
               <p className="text-sm text-muted-foreground">{route.description}</p>
             </div>
             <SafetyBadge level={route.safety_score} size="md" />
