@@ -217,6 +217,8 @@ const Map = () => {
     setNavElapsedMin(0);
     setSelectedRoute(null);
     setSelectedDestination(null);
+    setRouteOrigin(null);
+    setRouteDestination(null);
     setSearchQuery("");
     clearRoute();
   };
