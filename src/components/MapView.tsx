@@ -69,60 +69,39 @@ const createUserIcon = () => {
   });
 };
 
-// Custom destination icon with premium styling
+// Custom destination icon - VT Turkey Foot in orange/maroon
 const createDestinationIcon = () => {
   return L.divIcon({
     className: "destination-marker",
     html: `
-      <div class="dest-marker-container">
-        <div class="dest-marker-pin">
-          <div class="dest-marker-inner"></div>
-        </div>
-        <div class="dest-marker-shadow"></div>
+      <div class="hokie-foot-container">
+        <svg width="36" height="44" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Shadow -->
+          <ellipse cx="18" cy="42" rx="8" ry="2" fill="rgba(0,0,0,0.2)"/>
+          <!-- Turkey foot SVG - maroon outline with orange fill -->
+          <g transform="translate(4, 2) scale(0.7)">
+            <!-- Center toe -->
+            <path d="M20 2C20 2 18 8 18 12C18 16 20 22 20 22C20 22 22 16 22 12C22 8 20 2 20 2Z" 
+                  fill="#E87722" stroke="#660000" stroke-width="2.5" stroke-linejoin="round"/>
+            <!-- Left toe -->
+            <path d="M8 18C8 18 10 14 14 14C18 14 18 18 18 22C18 22 14 20 12 22C10 24 8 18 8 18Z" 
+                  fill="#E87722" stroke="#660000" stroke-width="2.5" stroke-linejoin="round"/>
+            <!-- Right toe -->
+            <path d="M32 18C32 18 30 14 26 14C22 14 22 18 22 22C22 22 26 20 28 22C30 24 32 18 32 18Z" 
+                  fill="#E87722" stroke="#660000" stroke-width="2.5" stroke-linejoin="round"/>
+            <!-- Heel/palm -->
+            <ellipse cx="20" cy="26" rx="6" ry="4" fill="#E87722" stroke="#660000" stroke-width="2.5"/>
+          </g>
+        </svg>
       </div>
       <style>
-        .dest-marker-container {
-          position: relative;
-          width: 32px;
-          height: 40px;
-        }
-        .dest-marker-pin {
-          position: absolute;
-          top: 0;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 28px;
-          height: 28px;
-          background: linear-gradient(135deg, hsl(262, 83%, 58%) 0%, hsl(262, 83%, 48%) 100%);
-          border-radius: 50% 50% 50% 0;
-          transform: translateX(-50%) rotate(-45deg);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 3px 12px rgba(139, 92, 246, 0.4);
-        }
-        .dest-marker-inner {
-          width: 10px;
-          height: 10px;
-          background: white;
-          border-radius: 50%;
-          transform: rotate(45deg);
-        }
-        .dest-marker-shadow {
-          position: absolute;
-          bottom: 0;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 12px;
-          height: 4px;
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 50%;
-          filter: blur(2px);
+        .hokie-foot-container {
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         }
       </style>
     `,
-    iconSize: [32, 40],
-    iconAnchor: [16, 40],
+    iconSize: [36, 44],
+    iconAnchor: [18, 42],
   });
 };
 
