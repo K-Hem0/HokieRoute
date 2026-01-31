@@ -131,7 +131,63 @@
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.15s ease;
   }
 
-  /* Mapbox overrides */
+  /* Leaflet map z-index overrides - ensure UI is above the map */
+  .leaflet-container {
+    z-index: 0 !important;
+  }
+
+  .leaflet-pane {
+    z-index: 1 !important;
+  }
+
+  .leaflet-tile-pane {
+    z-index: 1 !important;
+  }
+
+  .leaflet-overlay-pane {
+    z-index: 2 !important;
+  }
+
+  .leaflet-marker-pane {
+    z-index: 3 !important;
+  }
+
+  .leaflet-tooltip-pane {
+    z-index: 4 !important;
+  }
+
+  .leaflet-popup-pane {
+    z-index: 5 !important;
+  }
+
+  .leaflet-control-container {
+    z-index: 6 !important;
+  }
+
+  .leaflet-top,
+  .leaflet-bottom {
+    z-index: 6 !important;
+  }
+
+  /* Leaflet control styling */
+  .leaflet-control-zoom {
+    @apply border-border rounded-lg overflow-hidden shadow-lg;
+  }
+
+  .leaflet-control-zoom a {
+    @apply bg-card text-foreground border-border;
+  }
+
+  .leaflet-control-zoom a:hover {
+    @apply bg-secondary;
+  }
+
+  /* Hide Leaflet attribution on mobile */
+  .leaflet-control-attribution {
+    @apply text-xs opacity-50;
+  }
+
+  /* Mapbox overrides (legacy) */
   .mapboxgl-ctrl-logo,
   .mapboxgl-ctrl-attrib {
     display: none !important;
