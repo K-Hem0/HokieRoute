@@ -38,11 +38,11 @@ export const RouteReassurance = ({ className }: RouteReassuranceProps) => {
     <div className={cn("", className)}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        className="w-full flex items-center justify-between py-2 text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
       >
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-2">
           <Shield className="h-3 w-3" />
-          Why this route?
+          <span className="tracking-tight">Why this route?</span>
         </span>
         {isExpanded ? (
           <ChevronUp className="h-3 w-3" />
@@ -60,16 +60,16 @@ export const RouteReassurance = ({ className }: RouteReassuranceProps) => {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="pb-2 space-y-1.5">
+            <div className="pb-3 space-y-2">
               {points.map((point, index) => {
                 const Icon = point.icon;
                 return (
                   <div
                     key={index}
-                    className="flex items-center gap-2 text-xs text-muted-foreground"
+                    className="flex items-center gap-2 text-xs text-muted-foreground/80"
                   >
                     <Icon className="h-3 w-3 text-primary flex-shrink-0" />
-                    <span>{point.text}</span>
+                    <span className="tracking-tight">{point.text}</span>
                   </div>
                 );
               })}

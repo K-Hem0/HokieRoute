@@ -46,7 +46,7 @@ const PlaceSearchInput = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           placeholder={placeholder}
-          className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
+          className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none"
         />
         {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         {value && !loading && (
@@ -84,10 +84,10 @@ const PlaceSearchInput = ({
                       <MapPin className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
+                      <p className="text-sm font-medium text-foreground truncate tracking-tight">
                         {place.name}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-xs text-muted-foreground/70 truncate mt-0.5">
                         {place.fullAddress}
                       </p>
                     </div>

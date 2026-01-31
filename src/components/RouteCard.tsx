@@ -98,7 +98,7 @@ const RouteCard = ({ route, mode, onClick, variant = "compact" }: RouteCardProps
             {/* Route name and context */}
             <div className="space-y-1">
               <h3 className={cn(
-                "font-semibold text-foreground",
+                "font-semibold text-foreground tracking-tight",
                 variant === "compact" ? "text-sm" : "text-base"
               )}>
                 {route.name}
@@ -106,11 +106,11 @@ const RouteCard = ({ route, mode, onClick, variant = "compact" }: RouteCardProps
               
               {/* Contextual interpretation label */}
               <div className="flex items-center gap-1.5">
-                <ContextIcon className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">{context.label}</span>
+                <ContextIcon className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-xs text-muted-foreground/70">{context.label}</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Info className="h-3 w-3 text-muted-foreground/60 cursor-help" />
+                    <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[200px] text-xs">
                     {context.tooltip}
@@ -119,8 +119,8 @@ const RouteCard = ({ route, mode, onClick, variant = "compact" }: RouteCardProps
               </div>
             </div>
             
-            {/* Distance and time */}
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            {/* Distance and time - 8px gap */}
+            <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
               <span className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 {route.distance_km} km
