@@ -311,22 +311,27 @@ export const PointToPointSheet = ({
           )}
         </AnimatePresence>
 
-        {/* Action Section - visually separated */}
+        {/* Action section */}
         <div className="px-4 pb-4 pt-1 border-t border-border/50">
           <Button
             className="w-full h-12 rounded-xl text-sm font-medium mt-3"
             onClick={handleStartRoute}
-            disabled={!origin || !destination || routeLoading}
+            disabled={!origin || !destination || routeLoading || calculatedRoute !== null}
           >
             {routeLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Calculating...
               </>
+            ) : calculatedRoute ? (
+              <>
+                <Navigation className="h-4 w-4 mr-2" />
+                Route ready
+              </>
             ) : (
               <>
                 <Navigation className="h-4 w-4 mr-2" />
-                {calculatedRoute ? "Start Navigation" : "Get Route"}
+                Get route
               </>
             )}
           </Button>
