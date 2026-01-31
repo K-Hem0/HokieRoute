@@ -22,7 +22,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
 import { useRouting, formatDistance, formatDuration } from "@/hooks/useRouting";
 import { useMapState } from "@/hooks/useMapState";
-import { Heart, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair, Search } from "lucide-react";
+import { Heart, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair, Search, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,6 +45,7 @@ const Map = () => {
   // Point-to-point routing state
   const [routeOrigin, setRouteOrigin] = useState<PlaceResult | null>(null);
   const [showPointToPoint, setShowPointToPoint] = useState(false);
+  const [heatmapEnabled, setHeatmapEnabled] = useState(false);
 
   // Map state management
   const { state: mapState, config, setExplore, setPlanning, setNavigation } = useMapState("explore");
@@ -259,6 +260,8 @@ const Map = () => {
         userLocation={effectiveLocation}
         destinationMarker={destinationMarkerCoords}
         calculatedRoute={calculatedRoute?.coordinates || null}
+        heatmapEnabled={heatmapEnabled}
+        onHeatmapToggle={setHeatmapEnabled}
         onMapClick={() => {
           if (mapState === "explore") {
             setSelectedRoute(null);
@@ -376,6 +379,28 @@ const Map = () => {
                     {accuracy ? `Accuracy: ~${Math.round(accuracy)}m` : 'Get location'}
                     {!isAccurate && accuracy && ' (low accuracy)'}
                   </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Heatmap toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    className={cn(
+                      "h-12 w-12 rounded-full shadow-lg",
+                      heatmapEnabled && "bg-primary text-primary-foreground hover:bg-primary/90"
+                    )}
+                    variant="secondary"
+                    onClick={() => setHeatmapEnabled(!heatmapEnabled)}
+                  >
+                    <Flame className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{heatmapEnabled ? "Hide safety heatmap" : "Show safety heatmap"}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
