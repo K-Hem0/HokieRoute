@@ -51,7 +51,7 @@ const Landing = () => {
             transition={{ delay: 0.1 }}
             className="text-sm text-primary font-medium mb-4"
           >
-            Built for Blacksburg
+            Built for Hokies
           </motion.p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight mb-4">
             Walk safer.{" "}
@@ -212,7 +212,7 @@ const Landing = () => {
       <footer className="relative z-10 px-6 py-8 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-sm font-semibold text-foreground">SafeRoute</span>
-          <span className="text-xs text-muted-foreground">Made for Hokies</span>
+          <span className="text-xs text-muted-foreground">Made for Hokies <span className="font-semibold text-primary">BY</span> Hokies</span>
         </div>
       </footer>
     </div>
