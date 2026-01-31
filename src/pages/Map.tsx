@@ -150,6 +150,12 @@ const Map = () => {
   const handleNavigateToDestination = async () => {
     if (!selectedDestination) return;
     
+    // If route already calculated, start navigation
+    if (calculatedRoute) {
+      handleStartNavigation();
+      return;
+    }
+    
     const origin = effectiveLocation || [-80.4139, 37.2296]; // Default to Blacksburg center
     
     // Walking-only routing
@@ -160,6 +166,18 @@ const Map = () => {
     } else {
       toast.error("Could not calculate route. Try a different destination.");
     }
+  };
+
+  // Start live navigation - clear UI and focus on route
+  const handleStartNavigation = () => {
+    // Clear search and destination card UI
+    setSearchQuery("");
+    
+    // Enter navigation mode
+    setNavigation();
+    setNavElapsedMin(0);
+    
+    toast.success("Navigation started");
   };
 
   // Point-to-point routing completed
@@ -201,6 +219,9 @@ const Map = () => {
     setExplore();
     setNavElapsedMin(0);
     setSelectedRoute(null);
+    setSelectedDestination(null);
+    setSearchQuery("");
+    clearRoute();
     toast.info("Navigation ended");
   };
 
@@ -262,9 +283,11 @@ const Map = () => {
 
       {/* Navigation Status Bar - Compact at bottom */}
       <AnimatePresence>
-        {mapState === "navigation" && selectedRoute && (
+        {mapState === "navigation" && (selectedRoute || calculatedRoute) && (
           <NavigationStatusBar
             route={selectedRoute}
+            calculatedRoute={calculatedRoute}
+            destinationName={selectedDestination?.name}
             mode={mode}
             onStop={handleStopNavigation}
             elapsedMin={navElapsedMin}
