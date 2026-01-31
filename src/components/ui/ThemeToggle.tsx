@@ -1,5 +1,11 @@
 import { Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ThemeToggleProps {
   isDark: boolean;
@@ -9,26 +15,38 @@ interface ThemeToggleProps {
 
 const ThemeToggle = ({ isDark, onToggle, className }: ThemeToggleProps) => {
   return (
-    <button
-      onClick={onToggle}
-      className={cn(
-        "flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm font-medium transition-all hover:bg-secondary",
-        className
-      )}
-      aria-label={isDark ? "Switch to day mode" : "Switch to night mode"}
-    >
-      {isDark ? (
-        <>
-          <Sun className="h-4 w-4 text-primary" />
-          <span className="text-muted-foreground">Day</span>
-        </>
-      ) : (
-        <>
-          <Moon className="h-4 w-4 text-primary" />
-          <span className="text-muted-foreground">Night</span>
-        </>
-      )}
-    </button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={onToggle}
+            className={cn(
+              "flex items-center justify-center h-12 w-12 rounded-full border border-border bg-card transition-all hover:bg-secondary",
+              isDark && "bg-card/90 border-primary/30",
+              className
+            )}
+            aria-label={isDark ? "Switch to day mode" : "Switch to night mode"}
+          >
+            {isDark ? (
+              <Moon className="h-5 w-5 text-primary" />
+            ) : (
+              <Sun className="h-5 w-5 text-primary" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="max-w-[180px]">
+          <p className="font-medium text-xs">
+            {isDark ? "Night Mode" : "Day Mode"}
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            {isDark 
+              ? "Optimized for low-light navigation" 
+              : "Optimized for planning & exploration"
+            }
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
