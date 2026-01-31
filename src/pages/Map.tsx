@@ -58,8 +58,11 @@ const Map = () => {
     return () => stopWatching();
   }, [startWatching, stopWatching]);
 
-  // Debounced place search
+  // Debounced place search - only for main search bar (not point-to-point)
   useEffect(() => {
+    // Skip if point-to-point is open - those inputs handle their own search
+    if (showPointToPoint) return;
+    
     const timer = setTimeout(() => {
       if (searchQuery) {
         searchPlaces(searchQuery);
@@ -68,7 +71,7 @@ const Map = () => {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, searchPlaces, clearResults, effectiveLocation]);
+  }, [searchQuery, searchPlaces, clearResults, effectiveLocation, showPointToPoint]);
 
   const nearbyRoutes = routes.slice(0, 3);
 
@@ -444,15 +447,23 @@ const Map = () => {
                   type="text"
                   value={originSearchQuery}
                   onChange={(e) => {
-                    setOriginSearchQuery(e.target.value);
+                    const val = e.target.value;
+                    setOriginSearchQuery(val);
                     setActiveSearchField("origin");
-                    if (e.target.value.length >= 2) {
-                      searchPlaces(e.target.value);
+                    // Debounce search internally
+                    if (val.length >= 2) {
+                      searchPlaces(val);
                     } else {
                       clearResults();
                     }
                   }}
-                  onFocus={() => setActiveSearchField("origin")}
+                  onFocus={() => {
+                    setActiveSearchField("origin");
+                    // Re-trigger search on focus if there's text
+                    if (originSearchQuery.length >= 2) {
+                      searchPlaces(originSearchQuery);
+                    }
+                  }}
                   placeholder="Starting point"
                   className="w-full h-12 pl-9 pr-4 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
@@ -467,15 +478,22 @@ const Map = () => {
                   type="text"
                   value={destSearchQuery}
                   onChange={(e) => {
-                    setDestSearchQuery(e.target.value);
+                    const val = e.target.value;
+                    setDestSearchQuery(val);
                     setActiveSearchField("destination");
-                    if (e.target.value.length >= 2) {
-                      searchPlaces(e.target.value);
+                    if (val.length >= 2) {
+                      searchPlaces(val);
                     } else {
                       clearResults();
                     }
                   }}
-                  onFocus={() => setActiveSearchField("destination")}
+                  onFocus={() => {
+                    setActiveSearchField("destination");
+                    // Re-trigger search on focus if there's text
+                    if (destSearchQuery.length >= 2) {
+                      searchPlaces(destSearchQuery);
+                    }
+                  }}
                   placeholder="Destination"
                   className="w-full h-12 pl-9 pr-4 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
