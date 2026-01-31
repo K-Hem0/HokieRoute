@@ -211,9 +211,9 @@ const MapView = ({
   const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
   // Day mode: softer, lighter feel for exploration
-  // Night mode: enhanced visibility with brighter tiles while maintaining dark aesthetic
+  // Night mode: significantly brightened with enhanced contrast for visibility
   const darkTileStyle = isDark 
-    ? { filter: "brightness(1.4) contrast(1.2) saturate(1.1)" } 
+    ? { filter: "brightness(1.8) contrast(1.3) saturate(1.2)" } 
     : { filter: "brightness(1.02) contrast(0.98) saturate(1.05)" };
 
   const mapCenter: [number, number] = userLatLng || BLACKSBURG_CENTER;
