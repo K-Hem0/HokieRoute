@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.heat";
@@ -11,9 +11,52 @@ interface SafetyHeatmapLayerProps {
   isDark?: boolean;
 }
 
+// Calculate radius based on zoom level - smaller radius when zoomed out
+const getRadiusForZoom = (zoom: number): number => {
+  // At zoom 17+: full radius (35px)
+  // At zoom 14: medium radius (20px)
+  // At zoom 12 or less: minimal radius (10px)
+  if (zoom >= 17) return 35;
+  if (zoom >= 16) return 28;
+  if (zoom >= 15) return 22;
+  if (zoom >= 14) return 16;
+  if (zoom >= 13) return 12;
+  return 8;
+};
+
+// Calculate blur based on zoom level
+const getBlurForZoom = (zoom: number): number => {
+  if (zoom >= 17) return 25;
+  if (zoom >= 16) return 20;
+  if (zoom >= 15) return 16;
+  if (zoom >= 14) return 12;
+  return 8;
+};
+
+// Calculate opacity based on zoom - fade out when zoomed out
+const getOpacityForZoom = (zoom: number): number => {
+  if (zoom >= 15) return 0.3;
+  if (zoom >= 14) return 0.25;
+  if (zoom >= 13) return 0.2;
+  return 0.15;
+};
+
 export function SafetyHeatmapLayer({ points, visible, isDark = true }: SafetyHeatmapLayerProps) {
   const map = useMap();
   const heatLayerRef = useRef<L.Layer | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(map.getZoom());
+
+  // Update zoom state on map zoom
+  const handleZoom = useCallback(() => {
+    setCurrentZoom(map.getZoom());
+  }, [map]);
+
+  useEffect(() => {
+    map.on("zoomend", handleZoom);
+    return () => {
+      map.off("zoomend", handleZoom);
+    };
+  }, [map, handleZoom]);
 
   useEffect(() => {
     // Remove existing layer
@@ -50,13 +93,13 @@ export function SafetyHeatmapLayer({ points, visible, isDark = true }: SafetyHea
           1.0: "rgba(185, 28, 28, 0.9)",
         };
 
-    // Create heat layer
+    // Create heat layer with zoom-responsive sizing
     const heatLayer = L.heatLayer(heatData, {
-      radius: 35,
-      blur: 25,
+      radius: getRadiusForZoom(currentZoom),
+      blur: getBlurForZoom(currentZoom),
       maxZoom: 17,
       max: 1.0,
-      minOpacity: 0.3,
+      minOpacity: getOpacityForZoom(currentZoom),
       gradient,
     });
 
@@ -69,7 +112,7 @@ export function SafetyHeatmapLayer({ points, visible, isDark = true }: SafetyHea
         heatLayerRef.current = null;
       }
     };
-  }, [map, points, visible, isDark]);
+  }, [map, points, visible, isDark, currentZoom]);
 
   return null;
 }
