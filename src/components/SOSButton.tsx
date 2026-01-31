@@ -22,13 +22,40 @@ export const SOSButton = ({ className }: SOSButtonProps) => {
 
   // Get location when dialog opens
   const getLocation = useCallback(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => setCurrentLocation(position),
-        (error) => console.error("Location error:", error),
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported by your browser");
+      return;
     }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCurrentLocation(position);
+        toast.success("Location acquired");
+      },
+      (error) => {
+        console.error("Location error:", error.message, error.code);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            toast.error("Location access denied. Please enable location permissions.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            toast.error("Location unavailable. Try again outside.");
+            break;
+          case error.TIMEOUT:
+            toast.error("Location request timed out. Trying again...");
+            // Retry with lower accuracy
+            navigator.geolocation.getCurrentPosition(
+              (pos) => setCurrentLocation(pos),
+              () => toast.error("Could not get location"),
+              { enableHighAccuracy: false, timeout: 10000 }
+            );
+            break;
+          default:
+            toast.error("Could not get location");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+    );
   }, []);
 
   const formatLocationMessage = useCallback((position: GeolocationPosition | null) => {
