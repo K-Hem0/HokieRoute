@@ -118,27 +118,49 @@ const Landing = () => {
                   rx="25"
                   ry="15"
                   fill="none"
-                  stroke={isDark ? "#C4B5FD" : "hsl(var(--primary))"}
-                  strokeWidth="3"
+                  // Brighter hues in night mode
+                  stroke={isDark ? "hsl(262 95% 78%)" : "hsl(var(--primary))"}
+                  strokeWidth="3.5"
                   strokeLinecap="round"
                   className="animate-pulse"
-                  style={isDark ? { filter: "drop-shadow(0 0 12px #A78BFA) drop-shadow(0 0 24px #8B5CF6)" } : undefined}
+                  style={
+                    isDark
+                      ? {
+                          filter:
+                            "drop-shadow(0 0 10px hsl(262 95% 78%)) drop-shadow(0 0 22px hsl(270 92% 66%)) drop-shadow(0 0 40px hsl(270 92% 66%))",
+                        }
+                      : undefined
+                  }
                 />
                 {/* Start point */}
-                <circle 
-                  cx="25" 
-                  cy="50" 
-                  r="4" 
-                  fill={isDark ? "#4ADE80" : "hsl(var(--safe))"}
-                  style={isDark ? { filter: "drop-shadow(0 0 8px #4ADE80)" } : undefined}
+                <circle
+                  cx="25"
+                  cy="50"
+                  r="4.5"
+                  fill={isDark ? "hsl(142 85% 62%)" : "hsl(var(--safe))"}
+                  style={
+                    isDark
+                      ? {
+                          filter:
+                            "drop-shadow(0 0 10px hsl(142 85% 62%)) drop-shadow(0 0 22px hsl(142 85% 62%))",
+                        }
+                      : undefined
+                  }
                 />
                 {/* End point */}
-                <circle 
-                  cx="75" 
-                  cy="50" 
-                  r="4" 
-                  fill={isDark ? "#C4B5FD" : "hsl(var(--primary))"}
-                  style={isDark ? { filter: "drop-shadow(0 0 10px #A78BFA) drop-shadow(0 0 20px #8B5CF6)" } : undefined}
+                <circle
+                  cx="75"
+                  cy="50"
+                  r="4.5"
+                  fill={isDark ? "hsl(262 95% 78%)" : "hsl(var(--primary))"}
+                  style={
+                    isDark
+                      ? {
+                          filter:
+                            "drop-shadow(0 0 10px hsl(262 95% 78%)) drop-shadow(0 0 22px hsl(270 92% 66%)) drop-shadow(0 0 36px hsl(270 92% 66%))",
+                        }
+                      : undefined
+                  }
                 />
               </svg>
             </div>
