@@ -23,7 +23,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
 import { useRouting, formatDistance, formatDuration } from "@/hooks/useRouting";
 import { useMapState } from "@/hooks/useMapState";
-import { Heart, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair, Search, Flame } from "lucide-react";
+import { Heart, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair, Search, Flame, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
@@ -529,9 +529,33 @@ const Map = () => {
         )}
       </AnimatePresence>
 
+      {/* Clear Route Button - shown when point-to-point route is displayed */}
+      <AnimatePresence>
+        {routeOrigin && routeDestination && !showPointToPoint && mapState === "explore" && (
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="absolute inset-x-0 bottom-0 z-10 p-4 pb-safe-bottom"
+          >
+            <div className="mx-auto max-w-md">
+              <Button
+                variant="secondary"
+                className="w-full h-12 rounded-xl shadow-lg text-sm font-medium"
+                onClick={handleClearPointToPoint}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear route
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Bottom Quick Access - Explore state only */}
       <AnimatePresence>
-        {showBottomUI && !selectedDestination && !showPointToPoint && (
+        {showBottomUI && !selectedDestination && !showPointToPoint && !routeOrigin && (
           <motion.div
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
