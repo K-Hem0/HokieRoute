@@ -18,22 +18,21 @@ export interface CalculatedRoute {
  * Hook for calculating pedestrian-only routes using OSRM
  * Uses OpenStreetMap data with foot profile for accurate walking paths
  */
-export const useRouting = () => {
+export function useRouting() {
   const [route, setRoute] = useState<CalculatedRoute | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const calculateRoute = useCallback(
     async (
-      origin: [number, number], // [lng, lat]
-      destination: [number, number] // [lng, lat]
+      origin: [number, number],
+      destination: [number, number]
     ): Promise<CalculatedRoute | null> => {
       setLoading(true);
       setError(null);
 
       try {
-        // Use OSRM Routing Machine with foot profile via routing.openstreetmap.de
-        // This server specifically supports walking routes
+        // Use OSRM with foot profile via routing.openstreetmap.de
         const url = `https://routing.openstreetmap.de/routed-foot/route/v1/walking/${origin[0]},${origin[1]};${destination[0]},${destination[1]}?overview=full&geometries=geojson&steps=true`;
 
         const response = await fetch(url);
@@ -46,7 +45,6 @@ export const useRouting = () => {
         const osrmRoute = data.routes[0];
         const coordinates: [number, number][] = osrmRoute.geometry.coordinates;
 
-        // Extract steps with pedestrian-friendly instructions
         const steps: RouteStep[] = osrmRoute.legs[0].steps.map((step: any) => ({
           instruction: step.maneuver.instruction || formatPedestrianManeuver(step),
           distance: step.distance,
@@ -80,16 +78,12 @@ export const useRouting = () => {
   }, []);
 
   return { route, loading, error, calculateRoute, clearRoute };
-};
+}
 
-/**
- * Format OSRM maneuver into pedestrian-friendly instructions
- */
 function formatPedestrianManeuver(step: any): string {
   const type = step.maneuver?.type || "";
   const modifier = step.maneuver?.modifier || "";
   const name = step.name || "";
-
   const pathPrefix = name ? `on ${name}` : "";
 
   switch (type) {
@@ -118,9 +112,6 @@ function formatPedestrianManeuver(step: any): string {
   }
 }
 
-/**
- * Format distance for display
- */
 export function formatDistance(meters: number): string {
   if (meters < 1000) {
     return `${Math.round(meters)} m`;
@@ -128,9 +119,6 @@ export function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
-/**
- * Format duration for display
- */
 export function formatDuration(seconds: number): string {
   const minutes = Math.round(seconds / 60);
   if (minutes < 60) {
