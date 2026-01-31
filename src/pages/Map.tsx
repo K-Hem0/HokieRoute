@@ -34,6 +34,7 @@ const Map = () => {
   const [showSaved, setShowSaved] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [navElapsedMin, setNavElapsedMin] = useState(0);
   const [selectedDestination, setSelectedDestination] = useState<PlaceResult | null>(null);
@@ -63,8 +64,10 @@ const Map = () => {
     
     const timer = setTimeout(() => {
       if (searchQuery && searchQuery.length >= 1) {
+        setHasSearched(true);
         searchPlaces(searchQuery);
       } else {
+        setHasSearched(false);
         clearResults();
       }
     }, 250);
@@ -241,6 +244,7 @@ const Map = () => {
               onSelectPlace={handlePlaceSelect}
               onClear={handleClearSearch}
               placeholder="Search buildings, places in Blacksburg..."
+              hasSearched={hasSearched}
             />
           </motion.div>
         </div>

@@ -13,6 +13,7 @@ interface PlaceSearchInputProps {
   onClear: () => void;
   placeholder?: string;
   className?: string;
+  hasSearched?: boolean;
 }
 
 const PlaceSearchInput = ({
@@ -24,9 +25,10 @@ const PlaceSearchInput = ({
   onClear,
   placeholder = "Search buildings, places...",
   className,
+  hasSearched = false,
 }: PlaceSearchInputProps) => {
   const [isFocused, setIsFocused] = React.useState(false);
-  const showResults = isFocused && (results.length > 0 || loading);
+  const showResults = isFocused && value.length >= 1 && (results.length > 0 || loading || (hasSearched && !loading));
 
   return (
     <div className={cn("relative", className)}>
@@ -70,7 +72,7 @@ const PlaceSearchInput = ({
               <div className="p-4 text-center text-sm text-muted-foreground">
                 Searching...
               </div>
-            ) : (
+            ) : results.length > 0 ? (
               <div className="max-h-64 overflow-y-auto">
                 {results.map((place) => (
                   <button
@@ -92,6 +94,10 @@ const PlaceSearchInput = ({
                     <Navigation className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
                   </button>
                 ))}
+              </div>
+            ) : (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No locations found for "{value}"
               </div>
             )}
           </motion.div>
