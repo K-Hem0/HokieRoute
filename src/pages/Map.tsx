@@ -176,11 +176,13 @@ const Map = () => {
     setNavElapsedMin(0);
   };
 
-  // Point-to-point routing completed
+  // Point-to-point routing completed - just display the route, don't start navigation
   const handlePointToPointComplete = (origin: PlaceResult, destination: PlaceResult) => {
     setRouteOrigin(origin);
-    setSelectedDestination(destination);
+    // Don't set selectedDestination - that triggers the destination card
+    // The route is already calculated and displayed on the map
     setShowPointToPoint(false);
+    setExplore(); // Stay in explore mode, just show the route
   };
 
   const handleClearPointToPoint = () => {
