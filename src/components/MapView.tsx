@@ -17,60 +17,109 @@ interface MapViewProps {
   calculatedRoute?: [number, number][] | null; // [lng, lat] pairs from OSRM
 }
 
-// Custom user location icon
+// Custom user location icon with premium styling
 const createUserIcon = () => {
   return L.divIcon({
     className: "user-location-marker",
     html: `
-      <div style="
-        width: 20px;
-        height: 20px;
-        background: hsl(262, 83%, 58%);
-        border: 3px solid white;
-        border-radius: 50%;
-        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
-        animation: pulse 2s infinite;
-      "></div>
+      <div class="user-marker-container">
+        <div class="user-marker-pulse"></div>
+        <div class="user-marker-dot"></div>
+      </div>
       <style>
-        @keyframes pulse {
-          0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
-          70% { box-shadow: 0 0 0 15px rgba(139, 92, 246, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+        .user-marker-container {
+          position: relative;
+          width: 24px;
+          height: 24px;
+        }
+        .user-marker-dot {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 16px;
+          height: 16px;
+          background: hsl(262, 83%, 58%);
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+        }
+        .user-marker-pulse {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 24px;
+          height: 24px;
+          background: rgba(139, 92, 246, 0.3);
+          border-radius: 50%;
+          animation: userPulse 2s ease-out infinite;
+        }
+        @keyframes userPulse {
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
         }
       </style>
     `,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 };
 
-// Custom destination icon
+// Custom destination icon with premium styling
 const createDestinationIcon = () => {
   return L.divIcon({
     className: "destination-marker",
     html: `
-      <div style="
-        width: 32px;
-        height: 32px;
-        background: hsl(262, 83%, 58%);
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      ">
-        <div style="
-          width: 12px;
-          height: 12px;
+      <div class="dest-marker-container">
+        <div class="dest-marker-pin">
+          <div class="dest-marker-inner"></div>
+        </div>
+        <div class="dest-marker-shadow"></div>
+      </div>
+      <style>
+        .dest-marker-container {
+          position: relative;
+          width: 32px;
+          height: 40px;
+        }
+        .dest-marker-pin {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 28px;
+          height: 28px;
+          background: linear-gradient(135deg, hsl(262, 83%, 58%) 0%, hsl(262, 83%, 48%) 100%);
+          border-radius: 50% 50% 50% 0;
+          transform: translateX(-50%) rotate(-45deg);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 3px 12px rgba(139, 92, 246, 0.4);
+        }
+        .dest-marker-inner {
+          width: 10px;
+          height: 10px;
           background: white;
           border-radius: 50%;
           transform: rotate(45deg);
-        "></div>
-      </div>
+        }
+        .dest-marker-shadow {
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 12px;
+          height: 4px;
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 50%;
+          filter: blur(2px);
+        }
+      </style>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
   });
 };
 
@@ -97,7 +146,7 @@ const MapController = ({
       const latLngs = calculatedRoute.map(([lng, lat]) => [lat, lng] as [number, number]);
       const bounds = L.latLngBounds(latLngs);
       const padding: [number, number] = isNavigating ? [150, 50] : [100, 50];
-      map.fitBounds(bounds, { padding });
+      map.fitBounds(bounds, { padding, maxZoom: 17 });
       return;
     }
 
@@ -106,14 +155,14 @@ const MapController = ({
       const latLngs = selectedRoute.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]);
       const bounds = L.latLngBounds(latLngs);
       const padding: [number, number] = isNavigating ? [150, 50] : [100, 50];
-      map.fitBounds(bounds, { padding });
+      map.fitBounds(bounds, { padding, maxZoom: 17 });
       return;
     }
 
     // Priority 3: Fly to destination marker
     if (destinationMarker) {
       const [lng, lat] = destinationMarker;
-      map.flyTo([lat, lng], 16, { duration: 1 });
+      map.flyTo([lat, lng], 17, { duration: 0.8 });
       return;
     }
 
@@ -124,7 +173,7 @@ const MapController = ({
       Math.abs(lastCenter.current[0] - lat) > 0.001 ||
       Math.abs(lastCenter.current[1] - lng) > 0.001
     ) {
-      map.flyTo(center, 15, { duration: 1 });
+      map.flyTo(center, 16, { duration: 0.8 });
       lastCenter.current = center;
     }
   }, [map, center, selectedRoute, destinationMarker, isNavigating, calculatedRoute]);
@@ -162,18 +211,41 @@ const MapView = ({
     ? calculatedRoute.map(([lng, lat]) => [lat, lng] as [number, number])
     : [];
 
-  // Tile layer URLs
-  const lightTiles = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-  const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  // OpenStreetMap-based tile layers optimized for pedestrian navigation
+  // CARTO Voyager: Clean, readable style with subtle labels
+  // CARTO Dark Matter: Dark mode optimized for low-light navigation
+  const lightTiles = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+  const darkTiles = "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png";
+  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
   const mapCenter: [number, number] = userLatLng || BLACKSBURG_CENTER;
 
+  // Route styling with navigation mode enhancement
+  const routeStyle = {
+    color: "#8B5CF6", // Primary violet
+    weight: isNavigating ? 7 : 5,
+    opacity: 1,
+    lineCap: "round" as const,
+    lineJoin: "round" as const,
+  };
+
+  // Route outline for better visibility
+  const routeOutlineStyle = {
+    color: isDark ? "#1a1a2e" : "#ffffff",
+    weight: isNavigating ? 11 : 9,
+    opacity: 0.8,
+    lineCap: "round" as const,
+    lineJoin: "round" as const,
+  };
+
   return (
-    <div className="absolute inset-0" style={{ zIndex: 0, isolation: 'isolate' }}>
+    <div 
+      className={`absolute inset-0 ${isNavigating ? "navigation-mode" : ""}`} 
+      style={{ zIndex: 0, isolation: 'isolate' }}
+    >
       <MapContainer
         center={mapCenter}
-        zoom={15}
+        zoom={16}
         zoomControl={false}
         className="h-full w-full"
         whenReady={() => setMapReady(true)}
@@ -200,28 +272,20 @@ const MapView = ({
         {/* Destination marker */}
         {destLatLng && <Marker position={destLatLng} icon={createDestinationIcon()} />}
 
-        {/* Preset route polyline */}
+        {/* Preset route polyline (outline + main) */}
         {routeLatLngs.length > 0 && !calculatedRoute && (
-          <Polyline
-            positions={routeLatLngs}
-            pathOptions={{
-              color: "#8B5CF6",
-              weight: isNavigating ? 6 : 4,
-              opacity: isNavigating ? 1 : 0.8,
-            }}
-          />
+          <>
+            <Polyline positions={routeLatLngs} pathOptions={routeOutlineStyle} />
+            <Polyline positions={routeLatLngs} pathOptions={routeStyle} />
+          </>
         )}
 
-        {/* Calculated route polyline */}
+        {/* Calculated route polyline (outline + main) */}
         {calculatedLatLngs.length > 0 && (
-          <Polyline
-            positions={calculatedLatLngs}
-            pathOptions={{
-              color: "#8B5CF6",
-              weight: isNavigating ? 6 : 4,
-              opacity: 1,
-            }}
-          />
+          <>
+            <Polyline positions={calculatedLatLngs} pathOptions={routeOutlineStyle} />
+            <Polyline positions={calculatedLatLngs} pathOptions={routeStyle} />
+          </>
         )}
       </MapContainer>
 
@@ -231,6 +295,14 @@ const MapView = ({
         style={{ zIndex: 400 }}
         onClick={onMapClick}
       />
+
+      {/* Navigation mode overlay - dims non-route areas */}
+      {isNavigating && (
+        <div 
+          className="absolute inset-0 pointer-events-none bg-background/20"
+          style={{ zIndex: 1 }}
+        />
+      )}
     </div>
   );
 };
