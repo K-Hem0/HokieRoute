@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { GoogleMapView } from "@/components/GoogleMapView";
+import { MapView } from "@/components/MapView";
 import { PlaceSearchInput } from "@/components/PlaceSearchInput";
 import { ModeToggle, Mode } from "@/components/ui/ModeToggle";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
 import { useTheme } from "@/hooks/useTheme";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { useGooglePlaceSearch, PlaceResult } from "@/hooks/useGooglePlaceSearch";
+import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
 import { Heart, Search, User, LogOut, Loader2, Flag, Navigation, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,7 +40,7 @@ const Map = () => {
   const { savedRouteIds, toggleSaveRoute, unsaveRoute, isRouteSaved } = useSavedRoutes();
   const { isDark, toggleTheme } = useTheme();
   const { effectiveLocation, requestLocation } = useGeolocation();
-  const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = useGooglePlaceSearch();
+  const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = usePlaceSearch();
 
   // Request location on mount
   useEffect(() => {
@@ -51,11 +51,11 @@ const Map = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery) {
-        searchPlaces(searchQuery, effectiveLocation);
+        searchPlaces(searchQuery);
       } else {
         clearResults();
       }
-    }, 500);
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery, searchPlaces, clearResults, effectiveLocation]);
 
@@ -92,7 +92,10 @@ const Map = () => {
   };
 
   const handlePlaceSelect = (place: PlaceResult) => {
-    setSelectedDestination(place);
+    setSelectedDestination({
+      ...place,
+      coordinates: place.coordinates,
+    });
     setSearchQuery(place.name);
     clearResults();
     toast.success(`Selected: ${place.name}`);
@@ -150,15 +153,13 @@ const Map = () => {
 
   const showBottomUI = !showDiscovery && !showRouteDetail && !showSaved && !isNavigating;
 
-  // Convert PlaceResult coordinates to the format expected by GoogleMapView
-  const destinationMarkerCoords = selectedDestination?.coordinates 
-    ? selectedDestination.coordinates 
-    : null;
+  // Convert PlaceResult coordinates to the format expected by MapView
+  const destinationMarkerCoords = selectedDestination?.coordinates || null;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Map */}
-      <GoogleMapView
+      <MapView
         selectedRoute={selectedRoute}
         isNavigating={isNavigating}
         isDark={isDark}
@@ -195,21 +196,9 @@ const Map = () => {
             <PlaceSearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              results={placeResults.map(p => ({
-                id: p.id,
-                name: p.name,
-                fullAddress: p.fullAddress,
-                coordinates: [p.coordinates.lng, p.coordinates.lat] as [number, number],
-              }))}
+              results={placeResults}
               loading={placesLoading}
-              onSelectPlace={(place) => {
-                handlePlaceSelect({
-                  id: place.id,
-                  name: place.name,
-                  fullAddress: place.fullAddress,
-                  coordinates: { lat: place.coordinates[1], lng: place.coordinates[0] },
-                });
-              }}
+              onSelectPlace={handlePlaceSelect}
               onClear={handleClearSearch}
               placeholder="Search buildings, places in Blacksburg..."
             />
