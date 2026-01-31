@@ -50,7 +50,7 @@ export const usePlaceSearch = () => {
       abortControllerRef.current.abort();
     }
 
-    if (!query || query.length < 2) {
+    if (!query || query.length < 1) {
       setResults([]);
       setLoading(false);
       return;
@@ -66,7 +66,7 @@ export const usePlaceSearch = () => {
       url.searchParams.set("q", query + " Blacksburg VA");
       url.searchParams.set("format", "json");
       url.searchParams.set("addressdetails", "1");
-      url.searchParams.set("limit", "5");
+      url.searchParams.set("limit", "6");
       url.searchParams.set("viewbox", BLACKSBURG_VIEWBOX);
       url.searchParams.set("bounded", "1");
       url.searchParams.set("countrycodes", "us");
@@ -95,7 +95,7 @@ export const usePlaceSearch = () => {
           });
       }
 
-      setResults(osmResults.slice(0, 6));
+      setResults(osmResults.slice(0, 5));
     } catch (err: any) {
       if (err.name === 'AbortError') return; // Ignore aborted requests
       setError(err.message);

@@ -7,7 +7,7 @@ interface UseDebouncedSearchOptions {
 }
 
 export const useDebouncedSearch = (options: UseDebouncedSearchOptions = {}) => {
-  const { debounceMs = 400, minLength = 2 } = options;
+  const { debounceMs = 300, minLength = 1 } = options;
   const { results, loading, error, searchPlaces, clearResults } = usePlaceSearch();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastQueryRef = useRef<string>("");
