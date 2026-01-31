@@ -57,11 +57,8 @@ const Map = () => {
     return () => stopWatching();
   }, [startWatching, stopWatching]);
 
-  // Debounced place search - only for main search bar (not point-to-point)
+  // Debounced place search for main search bar
   useEffect(() => {
-    // Skip if point-to-point is open - those inputs handle their own search
-    if (showPointToPoint) return;
-    
     const timer = setTimeout(() => {
       if (searchQuery && searchQuery.length >= 1) {
         setHasSearched(true);
@@ -72,7 +69,7 @@ const Map = () => {
       }
     }, 250);
     return () => clearTimeout(timer);
-  }, [searchQuery, searchPlaces, clearResults, effectiveLocation, showPointToPoint]);
+  }, [searchQuery, searchPlaces, clearResults, effectiveLocation]);
 
   const nearbyRoutes = routes.slice(0, 3);
 
