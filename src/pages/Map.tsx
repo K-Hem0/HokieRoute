@@ -18,8 +18,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
 import { useRouting, formatDistance, formatDuration } from "@/hooks/useRouting";
-import { Heart, Search, User, LogOut, Loader2, Flag, Navigation, MapPin } from "lucide-react";
+import { Heart, Search, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -40,13 +41,15 @@ const Map = () => {
   const { user, signOut } = useAuth();
   const { savedRouteIds, toggleSaveRoute, unsaveRoute, isRouteSaved } = useSavedRoutes();
   const { isDark, toggleTheme } = useTheme();
-  const { effectiveLocation, requestLocation } = useGeolocation();
+  const { effectiveLocation, accuracy, isAccurate, requestLocation, startWatching, stopWatching, isWatching, loading: locationLoading } = useGeolocation();
   const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = usePlaceSearch();
   const { route: calculatedRoute, loading: routeLoading, calculateRoute, clearRoute } = useRouting();
-  // Request location on mount
+
+  // Start watching location on mount for better accuracy
   useEffect(() => {
-    requestLocation();
-  }, [requestLocation]);
+    startWatching();
+    return () => stopWatching();
+  }, [startWatching, stopWatching]);
 
   // Debounced place search
   useEffect(() => {
@@ -232,6 +235,33 @@ const Map = () => {
             {user ? <LogOut className="h-5 w-5" /> : <User className="h-5 w-5" />}
           </Button>
           <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
+          
+          {/* Recenter / Location accuracy button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  className={`h-12 w-12 rounded-full shadow-lg ${!isAccurate ? 'animate-pulse' : ''}`}
+                  variant="secondary"
+                  onClick={requestLocation}
+                  disabled={locationLoading}
+                >
+                  {locationLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Crosshair className={`h-5 w-5 ${isAccurate ? 'text-primary' : 'text-muted-foreground'}`} />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>
+                  {accuracy ? `Accuracy: ~${Math.round(accuracy)}m` : 'Get location'}
+                  {!isAccurate && accuracy && ' (low accuracy)'}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       )}
 
