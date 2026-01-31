@@ -3,6 +3,9 @@ import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from "
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Route } from "@/lib/mock-data";
+import { SafetyHeatmapLayer } from "./map/SafetyHeatmapLayer";
+import { HeatmapToggle } from "./map/HeatmapToggle";
+import { useHeatmapData } from "@/hooks/useHeatmapData";
 
 // Blacksburg, VA center
 const BLACKSBURG_CENTER: [number, number] = [37.2296, -80.4139]; // [lat, lng] for Leaflet
@@ -191,6 +194,8 @@ const MapView = ({
   calculatedRoute,
 }: MapViewProps) => {
   const [mapReady, setMapReady] = useState(false);
+  const [heatmapEnabled, setHeatmapEnabled] = useState(false);
+  const { heatmapPoints, loading: heatmapLoading } = useHeatmapData();
 
   // Convert [lng, lat] to [lat, lng] for Leaflet
   const userLatLng: [number, number] | null = userLocation
@@ -261,6 +266,13 @@ const MapView = ({
 
         <ZoomControl position="bottomright" />
 
+        {/* Safety heatmap layer */}
+        <SafetyHeatmapLayer
+          points={heatmapPoints}
+          visible={heatmapEnabled}
+          isDark={isDark}
+        />
+
         <MapController
           center={mapCenter}
           selectedRoute={selectedRoute}
@@ -306,6 +318,15 @@ const MapView = ({
           style={{ zIndex: 1 }}
         />
       )}
+
+      {/* Heatmap toggle button */}
+      <div className="absolute top-4 right-4" style={{ zIndex: 1000 }}>
+        <HeatmapToggle
+          enabled={heatmapEnabled}
+          onToggle={() => setHeatmapEnabled(!heatmapEnabled)}
+          loading={heatmapLoading}
+        />
+      </div>
     </div>
   );
 };
