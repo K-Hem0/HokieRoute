@@ -227,7 +227,7 @@ const Map = () => {
 
       {/* Top Overlay - Hidden during navigation */}
       {!isNavigating && (
-        <div className="absolute inset-x-0 top-0 z-10 p-4 pt-safe">
+        <div className="absolute inset-x-0 top-0 z-30 p-4 pt-safe">
           <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
