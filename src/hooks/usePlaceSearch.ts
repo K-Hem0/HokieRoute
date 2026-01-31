@@ -15,10 +15,14 @@ export interface PlaceResult {
 
 // Convert quick location to PlaceResult
 function quickLocationToPlaceResult(loc: QuickLocation): PlaceResult {
+  const fullAddress = /\bblacksburg\b/i.test(loc.address)
+    ? loc.address
+    : `${loc.address}, Blacksburg, VA`;
+
   return {
     id: `local-${loc.id}`,
     name: loc.name,
-    fullAddress: loc.address,
+    fullAddress,
     coordinates: loc.coordinates,
     category: "Campus",
   };
