@@ -6,11 +6,90 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface SnowflakeSafetyData {
-  route_id?: string;
-  route_name?: string;
-  safety_score: string;
-  safety_insight?: string;
+async function processSnowflakeData(snowflakeData: any, corsHeaders: Record<string, string>) {
+  // Initialize Supabase client
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Process and insert/update routes with safety data
+  const results = {
+    processed: 0,
+    updated: 0,
+    errors: [] as string[],
+  };
+
+  // Snowflake returns data in a specific format - parse accordingly
+  const rows = snowflakeData.data || [];
+  const columns = snowflakeData.resultSetMetaData?.rowType?.map((col: any) => col.name.toLowerCase()) || [];
+
+  console.log(`Processing ${rows.length} rows with columns: ${columns.join(', ')}`);
+
+  for (const row of rows) {
+    try {
+      // Map row array to object using column names
+      const record: Record<string, any> = {};
+      columns.forEach((col: string, idx: number) => {
+        record[col] = row[idx];
+      });
+
+      // Extract safety fields - adjust these based on your actual Snowflake schema
+      const routeId = record.route_id || record.id;
+      const routeName = record.route_name || record.name;
+      const safetyScore = record.safety_score || record.score || 'moderate';
+      const safetyInsight = record.safety_insight || record.insight || '';
+
+      if (routeId) {
+        // Update existing route by ID
+        const { error } = await supabase
+          .from('routes')
+          .update({
+            safety_score: safetyScore,
+            safety_insight: safetyInsight,
+          })
+          .eq('id', routeId);
+
+        if (error) {
+          results.errors.push(`Failed to update route ${routeId}: ${error.message}`);
+        } else {
+          results.updated++;
+        }
+      } else if (routeName) {
+        // Try to match by name
+        const { error } = await supabase
+          .from('routes')
+          .update({
+            safety_score: safetyScore,
+            safety_insight: safetyInsight,
+          })
+          .eq('name', routeName);
+
+        if (error) {
+          results.errors.push(`Failed to update route ${routeName}: ${error.message}`);
+        } else {
+          results.updated++;
+        }
+      }
+
+      results.processed++;
+    } catch (rowError) {
+      results.errors.push(`Row processing error: ${rowError}`);
+    }
+  }
+
+  console.log(`Import complete: ${results.processed} processed, ${results.updated} updated`);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      message: 'Safety data import completed',
+      results,
+      snowflake_rows_returned: rows.length,
+    }),
+    {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    }
+  );
 }
 
 serve(async (req) => {
@@ -42,18 +121,18 @@ serve(async (req) => {
     const snowflakeUrl = `https://${account}.snowflakecomputing.com/api/v2/statements`;
 
     // Execute query to fetch safety data
-    const query = `
-      SELECT * FROM ${database}.${schema}.${tableName}
-      LIMIT ${limit}
-    `;
+    const query = `SELECT * FROM ${database}.${schema}.${tableName} LIMIT ${limit}`;
 
+    console.log(`Executing query: ${query}`);
+
+    // Try with Basic auth first (works for some Snowflake setups)
     const snowflakeResponse = await fetch(snowflakeUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${btoa(`${username}:${password}`)}`,
-        'X-Snowflake-Authorization-Token-Type': 'KEYPAIR_JWT',
         'Accept': 'application/json',
+        'User-Agent': 'lovable-edge-function/1.0',
       },
       body: JSON.stringify({
         statement: query,
@@ -61,100 +140,26 @@ serve(async (req) => {
         database: database,
         schema: schema,
         warehouse: warehouse,
-        role: body.role || 'PUBLIC',
       }),
     });
 
     if (!snowflakeResponse.ok) {
       const errorText = await snowflakeResponse.text();
       console.error('Snowflake API error:', snowflakeResponse.status, errorText);
-      throw new Error(`Snowflake API error: ${snowflakeResponse.status} - ${errorText}`);
+      
+      // Check if it's an auth issue
+      if (snowflakeResponse.status === 401 || snowflakeResponse.status === 403) {
+        throw new Error(`Snowflake authentication failed. Please verify credentials are correct. Status: ${snowflakeResponse.status}`);
+      }
+      
+      throw new Error(`Snowflake API error: ${snowflakeResponse.status} - ${errorText.substring(0, 500)}`);
     }
 
     const snowflakeData = await snowflakeResponse.json();
     console.log('Snowflake response received, processing data...');
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    return await processSnowflakeData(snowflakeData, corsHeaders);
 
-    // Process and insert/update routes with safety data
-    const results = {
-      processed: 0,
-      updated: 0,
-      errors: [] as string[],
-    };
-
-    // Snowflake returns data in a specific format - parse accordingly
-    const rows = snowflakeData.data || [];
-    const columns = snowflakeData.resultSetMetaData?.rowType?.map((col: any) => col.name.toLowerCase()) || [];
-
-    for (const row of rows) {
-      try {
-        // Map row array to object using column names
-        const record: Record<string, any> = {};
-        columns.forEach((col: string, idx: number) => {
-          record[col] = row[idx];
-        });
-
-        // Extract safety fields - adjust these based on your actual Snowflake schema
-        const routeId = record.route_id || record.id;
-        const routeName = record.route_name || record.name;
-        const safetyScore = record.safety_score || record.score || 'moderate';
-        const safetyInsight = record.safety_insight || record.insight || '';
-
-        if (routeId) {
-          // Update existing route by ID
-          const { error } = await supabase
-            .from('routes')
-            .update({
-              safety_score: safetyScore,
-              safety_insight: safetyInsight,
-            })
-            .eq('id', routeId);
-
-          if (error) {
-            results.errors.push(`Failed to update route ${routeId}: ${error.message}`);
-          } else {
-            results.updated++;
-          }
-        } else if (routeName) {
-          // Try to match by name
-          const { error } = await supabase
-            .from('routes')
-            .update({
-              safety_score: safetyScore,
-              safety_insight: safetyInsight,
-            })
-            .eq('name', routeName);
-
-          if (error) {
-            results.errors.push(`Failed to update route ${routeName}: ${error.message}`);
-          } else {
-            results.updated++;
-          }
-        }
-
-        results.processed++;
-      } catch (rowError) {
-        results.errors.push(`Row processing error: ${rowError}`);
-      }
-    }
-
-    console.log(`Import complete: ${results.processed} processed, ${results.updated} updated`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Safety data import completed',
-        results,
-        snowflake_rows_returned: rows.length,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
   } catch (error) {
     console.error('Snowflake import error:', error);
     return new Response(
