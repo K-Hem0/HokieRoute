@@ -77,16 +77,15 @@ const Map = () => {
     return () => clearTimeout(timer);
   }, [searchQuery, searchPlaces, clearResults, effectiveLocation]);
 
-  // Sync map state with UI state
+  // Sync map state with UI state - only planning when point-to-point sheet or route detail is open
   useEffect(() => {
-    if (showPointToPoint || selectedDestination || showRouteDetail) {
+    if (showPointToPoint || showRouteDetail) {
       setPlanning();
     } else if (mapState === "navigation") {
       // Stay in navigation
-    } else {
-      setExplore();
     }
-  }, [showPointToPoint, selectedDestination, showRouteDetail, mapState, setPlanning, setExplore]);
+    // Note: selectedDestination alone doesn't trigger planning - stays in explore with destination card
+  }, [showPointToPoint, showRouteDetail, mapState, setPlanning]);
 
   const nearbyRoutes = routes.slice(0, 3);
 
@@ -121,12 +120,22 @@ const Map = () => {
   };
 
   const handlePlaceSelect = (place: PlaceResult) => {
+    // Close point-to-point sheet if open
+    if (showPointToPoint) {
+      setShowPointToPoint(false);
+    }
+    
+    // Set the destination
     setSelectedDestination({
       ...place,
       coordinates: place.coordinates,
     });
     setSearchQuery(place.name);
     clearResults();
+    
+    // Stay in explore state (no dim effect) - destination card will show
+    setExplore();
+    
     toast.success(`Selected: ${place.name}`);
   };
 
