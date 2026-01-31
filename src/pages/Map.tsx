@@ -314,7 +314,7 @@ const Map = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="absolute inset-x-0 top-12 z-30 p-4 pt-safe"
+            className="absolute inset-x-0 top-12 z-50 p-4 pt-safe"
           >
             <PlaceSearchInput
               value={searchQuery}
