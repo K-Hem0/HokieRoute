@@ -335,7 +335,7 @@ const Map = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -20, opacity: 0 }}
             transition={{ duration: 0.25, delay: 0.1 }}
-            className="absolute left-4 top-20 z-10 flex flex-col gap-2"
+            className="absolute left-4 top-32 z-40 flex flex-col gap-2"
           >
             <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
             <Button
@@ -394,7 +394,7 @@ const Map = () => {
           >
             <Button
               size="icon"
-              className="absolute right-4 top-20 z-10 h-12 w-12 rounded-full shadow-lg"
+              className="absolute right-4 top-32 z-40 h-12 w-12 rounded-full shadow-lg"
               variant="secondary"
               onClick={handleSavedClick}
             >
