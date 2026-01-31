@@ -75,33 +75,35 @@ const createDestinationIcon = () => {
     className: "destination-marker",
     html: `
       <div class="hokie-foot-container">
-        <svg width="36" height="44" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="40" height="48" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
           <!-- Shadow -->
-          <ellipse cx="18" cy="42" rx="8" ry="2" fill="rgba(0,0,0,0.2)"/>
-          <!-- Turkey foot SVG - maroon outline with orange fill -->
-          <g transform="translate(4, 2) scale(0.7)">
-            <!-- Center toe -->
-            <path d="M20 2C20 2 18 8 18 12C18 16 20 22 20 22C20 22 22 16 22 12C22 8 20 2 20 2Z" 
-                  fill="#E87722" stroke="#660000" stroke-width="2.5" stroke-linejoin="round"/>
+          <ellipse cx="20" cy="46" rx="10" ry="2" fill="rgba(0,0,0,0.25)"/>
+          <!-- Turkey foot - three distinct toes with bumpy texture -->
+          <g transform="translate(2, 0)">
+            <!-- Center toe (longest) -->
+            <path d="M18 4 Q16 6 16 10 Q17 12 16 14 Q15 16 16 18 Q17 20 16 22 Q15 24 17 26 L18 28 L19 26 Q21 24 20 22 Q19 20 20 18 Q21 16 20 14 Q19 12 20 10 Q20 6 18 4 Z" 
+                  fill="#E87722" stroke="#861F41" stroke-width="2" stroke-linejoin="round"/>
             <!-- Left toe -->
-            <path d="M8 18C8 18 10 14 14 14C18 14 18 18 18 22C18 22 14 20 12 22C10 24 8 18 8 18Z" 
-                  fill="#E87722" stroke="#660000" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M8 16 Q6 17 5 20 Q5 22 6 24 Q7 25 6 27 Q6 29 8 31 L10 32 Q12 30 12 28 Q11 26 12 25 Q13 24 12 22 Q11 20 12 19 Q13 18 12 17 Q10 15 8 16 Z" 
+                  fill="#E87722" stroke="#861F41" stroke-width="2" stroke-linejoin="round"/>
             <!-- Right toe -->
-            <path d="M32 18C32 18 30 14 26 14C22 14 22 18 22 22C22 22 26 20 28 22C30 24 32 18 32 18Z" 
-                  fill="#E87722" stroke="#660000" stroke-width="2.5" stroke-linejoin="round"/>
-            <!-- Heel/palm -->
-            <ellipse cx="20" cy="26" rx="6" ry="4" fill="#E87722" stroke="#660000" stroke-width="2.5"/>
+            <path d="M28 16 Q30 17 31 20 Q31 22 30 24 Q29 25 30 27 Q30 29 28 31 L26 32 Q24 30 24 28 Q25 26 24 25 Q23 24 24 22 Q25 20 24 19 Q23 18 24 17 Q26 15 28 16 Z" 
+                  fill="#E87722" stroke="#861F41" stroke-width="2" stroke-linejoin="round"/>
+            <!-- Heel/palm connection -->
+            <ellipse cx="18" cy="34" rx="8" ry="5" fill="#E87722" stroke="#861F41" stroke-width="2"/>
+            <!-- Heel bulb -->
+            <ellipse cx="18" cy="38" rx="5" ry="4" fill="#E87722" stroke="#861F41" stroke-width="2"/>
           </g>
         </svg>
       </div>
       <style>
         .hokie-foot-container {
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+          filter: drop-shadow(0 3px 6px rgba(0,0,0,0.35));
         }
       </style>
     `,
-    iconSize: [36, 44],
-    iconAnchor: [18, 42],
+    iconSize: [40, 48],
+    iconAnchor: [20, 46],
   });
 };
 
