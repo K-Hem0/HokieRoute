@@ -39,7 +39,7 @@ export const PointToPointSheet = ({
   const originInputRef = useRef<HTMLInputElement>(null);
   const destInputRef = useRef<HTMLInputElement>(null);
   
-  const { results, loading, search, clear } = useDebouncedSearch({ debounceMs: 350 });
+  const { results, loading, search, clear } = useDebouncedSearch({ debounceMs: 250, minLength: 1 });
 
   // Focus origin input when sheet opens
   useEffect(() => {
@@ -155,7 +155,7 @@ export const PointToPointSheet = ({
                   onChange={(e) => handleOriginChange(e.target.value)}
                   onFocus={() => {
                     setActiveField("origin");
-                    if (originQuery.length >= 2 && !origin) search(originQuery);
+                    if (originQuery.length >= 1 && !origin) search(originQuery);
                   }}
                   placeholder="Starting point"
                   className={cn(
@@ -189,7 +189,7 @@ export const PointToPointSheet = ({
                   onChange={(e) => handleDestChange(e.target.value)}
                   onFocus={() => {
                     setActiveField("destination");
-                    if (destQuery.length >= 2 && !destination) search(destQuery);
+                    if (destQuery.length >= 1 && !destination) search(destQuery);
                   }}
                   placeholder="Where to?"
                   className={cn(
