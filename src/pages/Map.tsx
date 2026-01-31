@@ -458,9 +458,6 @@ const Map = () => {
                     <div className="flex items-center gap-1 text-sm text-foreground">
                       <span className="font-medium">{formatDuration(calculatedRoute.duration)}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {calculatedRoute.steps.length} steps
-                    </div>
                   </div>
                   
                   {/* Route reassurance - subtle expandable section */}
