@@ -36,6 +36,13 @@ const Map = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [navElapsedMin, setNavElapsedMin] = useState(0);
   const [selectedDestination, setSelectedDestination] = useState<PlaceResult | null>(null);
+  
+  // Point-to-point routing state
+  const [routeOrigin, setRouteOrigin] = useState<PlaceResult | null>(null);
+  const [showPointToPoint, setShowPointToPoint] = useState(false);
+  const [originSearchQuery, setOriginSearchQuery] = useState("");
+  const [destSearchQuery, setDestSearchQuery] = useState("");
+  const [activeSearchField, setActiveSearchField] = useState<"origin" | "destination">("origin");
 
   const { routes, loading: routesLoading } = useRoutes();
   const { user, signOut } = useAuth();
@@ -125,6 +132,40 @@ const Map = () => {
     } else {
       toast.error("Could not calculate route. Try a different destination.");
     }
+  };
+
+  // Point-to-point routing
+  const handlePointToPointRoute = async () => {
+    if (!routeOrigin || !selectedDestination) return;
+    
+    const result = await calculateRoute(routeOrigin.coordinates, selectedDestination.coordinates);
+    
+    if (result) {
+      toast.success(`Route found: ${formatDistance(result.distance)} • ${formatDuration(result.duration)}`);
+      setShowPointToPoint(false);
+    } else {
+      toast.error("Could not calculate route. Try different locations.");
+    }
+  };
+
+  const handlePointToPointPlaceSelect = (place: PlaceResult) => {
+    if (activeSearchField === "origin") {
+      setRouteOrigin(place);
+      setOriginSearchQuery(place.name);
+    } else {
+      setSelectedDestination(place);
+      setDestSearchQuery(place.name);
+    }
+    clearResults();
+  };
+
+  const handleClearPointToPoint = () => {
+    setRouteOrigin(null);
+    setSelectedDestination(null);
+    setOriginSearchQuery("");
+    setDestSearchQuery("");
+    setShowPointToPoint(false);
+    clearRoute();
   };
 
   const handleSaveRoute = async () => {
@@ -339,7 +380,7 @@ const Map = () => {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-        className={`absolute right-4 z-10 ${isNavigating ? "bottom-8" : selectedDestination ? "bottom-40" : "bottom-[280px]"}`}
+        className={`absolute right-4 z-10 ${isNavigating ? "bottom-8" : showPointToPoint ? "bottom-[320px]" : selectedDestination ? "bottom-40" : "bottom-24"}`}
       >
         <Button
           size="icon"
@@ -351,48 +392,132 @@ const Map = () => {
       </motion.div>
 
       {/* Bottom Quick Access (when no sheet is open and not navigating) */}
-      {showBottomUI && !selectedDestination && (
+      {showBottomUI && !selectedDestination && !showPointToPoint && (
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 50, opacity: 0 }}
-          className="absolute inset-x-0 bottom-0 z-10 space-y-3 p-4 pb-safe-bottom"
+          className="absolute inset-x-0 bottom-0 z-10 p-4 pb-safe-bottom"
         >
-          {/* Mode Toggle */}
-          <div className="flex justify-center">
-            <ModeToggle mode={mode} onChange={setMode} />
-          </div>
-
-          {/* Nearby Routes */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-medium text-foreground">Around campus</h3>
-              <button
-                onClick={() => setShowDiscovery(true)}
-                className="text-xs text-primary hover:underline"
-              >
-                View all
-              </button>
-            </div>
-            {routesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {nearbyRoutes.map((route) => (
-                  <RouteCard
-                    key={route.id}
-                    route={route}
-                    mode={mode}
-                    onClick={() => handleRouteSelect(route)}
-                  />
-                ))}
-              </div>
-            )}
+          {/* Point-to-Point Route Button */}
+          <div className="mx-auto max-w-md">
+            <Button
+              className="w-full h-14 rounded-xl shadow-lg text-base font-medium"
+              onClick={() => setShowPointToPoint(true)}
+            >
+              <Navigation className="h-5 w-5 mr-3" />
+              Route between two locations
+            </Button>
           </div>
         </motion.div>
       )}
+
+      {/* Point-to-Point Routing UI */}
+      <AnimatePresence>
+        {showPointToPoint && !isNavigating && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="absolute inset-x-0 bottom-0 z-20 p-4 pb-safe-bottom"
+          >
+            <div className="mx-auto max-w-md rounded-xl border border-border bg-card p-4 shadow-lg space-y-3">
+              <h3 className="text-sm font-medium text-foreground mb-2">Plan your walk</h3>
+              
+              {/* Origin input */}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary" />
+                <input
+                  type="text"
+                  value={originSearchQuery}
+                  onChange={(e) => {
+                    setOriginSearchQuery(e.target.value);
+                    setActiveSearchField("origin");
+                    if (e.target.value.length >= 2) {
+                      searchPlaces(e.target.value);
+                    } else {
+                      clearResults();
+                    }
+                  }}
+                  onFocus={() => setActiveSearchField("origin")}
+                  placeholder="Starting point"
+                  className="w-full h-12 pl-9 pr-4 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+              
+              {/* Destination input */}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <MapPin className="h-4 w-4 text-primary" />
+                </div>
+                <input
+                  type="text"
+                  value={destSearchQuery}
+                  onChange={(e) => {
+                    setDestSearchQuery(e.target.value);
+                    setActiveSearchField("destination");
+                    if (e.target.value.length >= 2) {
+                      searchPlaces(e.target.value);
+                    } else {
+                      clearResults();
+                    }
+                  }}
+                  onFocus={() => setActiveSearchField("destination")}
+                  placeholder="Destination"
+                  className="w-full h-12 pl-9 pr-4 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+
+              {/* Search results */}
+              {placeResults.length > 0 && (
+                <div className="max-h-40 overflow-y-auto rounded-lg border border-border bg-background">
+                  {placeResults.map((place) => (
+                    <button
+                      key={place.id}
+                      onClick={() => handlePointToPointPlaceSelect(place)}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-secondary transition-colors text-left"
+                    >
+                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{place.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{place.fullAddress}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Route info if calculated */}
+              {calculatedRoute && routeOrigin && selectedDestination && (
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-secondary/50">
+                  <div className="text-sm font-medium">{formatDistance(calculatedRoute.distance)}</div>
+                  <div className="text-sm font-medium">{formatDuration(calculatedRoute.duration)}</div>
+                  <div className="text-xs text-muted-foreground">{calculatedRoute.steps.length} steps</div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-2 pt-1">
+                <Button variant="outline" className="flex-1" onClick={handleClearPointToPoint}>
+                  Cancel
+                </Button>
+                <Button 
+                  className="flex-1" 
+                  onClick={handlePointToPointRoute}
+                  disabled={!routeOrigin || !selectedDestination || routeLoading}
+                >
+                  {routeLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Navigation className="h-4 w-4 mr-2" />
+                  )}
+                  Get Route
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Route Discovery Sheet */}
       <BottomSheet
