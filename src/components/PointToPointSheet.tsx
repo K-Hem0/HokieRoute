@@ -315,8 +315,8 @@ export const PointToPointSheet = ({
         <div className="px-4 pb-4 pt-1 border-t border-border/50">
           <Button
             className="w-full h-12 rounded-xl text-sm font-medium mt-3"
-            onClick={handleStartRoute}
-            disabled={!origin || !destination || routeLoading || calculatedRoute !== null}
+            onClick={calculatedRoute ? handleStartRoute : handleStartRoute}
+            disabled={!origin || !destination || routeLoading}
           >
             {routeLoading ? (
               <>
@@ -326,7 +326,7 @@ export const PointToPointSheet = ({
             ) : calculatedRoute ? (
               <>
                 <Navigation className="h-4 w-4 mr-2" />
-                Route ready
+                View route
               </>
             ) : (
               <>
