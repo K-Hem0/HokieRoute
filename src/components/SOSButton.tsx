@@ -11,68 +11,28 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 interface SOSButtonProps {
   className?: string;
+  userLocation?: [number, number] | null; // [lng, lat] from parent
 }
 
-export const SOSButton = ({ className }: SOSButtonProps) => {
+export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<GeolocationPosition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Get location when dialog opens
-  const getLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation not supported by your browser");
-      return;
-    }
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCurrentLocation(position);
-        toast.success("Location acquired");
-      },
-      (error) => {
-        console.error("Location error:", error.message, error.code);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            toast.error("Location access denied. Please enable location permissions.");
-            break;
-          case error.POSITION_UNAVAILABLE:
-            toast.error("Location unavailable. Try again outside.");
-            break;
-          case error.TIMEOUT:
-            toast.error("Location request timed out. Trying again...");
-            // Retry with lower accuracy
-            navigator.geolocation.getCurrentPosition(
-              (pos) => setCurrentLocation(pos),
-              () => toast.error("Could not get location"),
-              { enableHighAccuracy: false, timeout: 10000 }
-            );
-            break;
-          default:
-            toast.error("Could not get location");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
-    );
-  }, []);
-
-  const formatLocationMessage = useCallback((position: GeolocationPosition | null) => {
-    if (!position) {
+  const formatLocationMessage = useCallback(() => {
+    if (!userLocation) {
       return "Location unavailable.";
     }
-    const lat = position.coords.latitude.toFixed(6);
-    const lng = position.coords.longitude.toFixed(6);
-    const accuracy = Math.round(position.coords.accuracy);
-    return `The caller's GPS coordinates are: Latitude ${lat}, Longitude ${lng}, with accuracy of approximately ${accuracy} meters.`;
-  }, []);
+    const [lng, lat] = userLocation;
+    return `The caller's GPS coordinates are: Latitude ${lat.toFixed(6)}, Longitude ${lng.toFixed(6)}.`;
+  }, [userLocation]);
 
   const generateEmergencyVoice = useCallback(async () => {
     setIsGeneratingVoice(true);
     
     try {
-      const locationInfo = formatLocationMessage(currentLocation);
+      const locationInfo = formatLocationMessage();
       
       const response = await fetch(
         `${SUPABASE_URL}/functions/v1/elevenlabs-sos`,
@@ -124,7 +84,7 @@ export const SOSButton = ({ className }: SOSButtonProps) => {
     } finally {
       setIsGeneratingVoice(false);
     }
-  }, [currentLocation, formatLocationMessage]);
+  }, [formatLocationMessage]);
 
   const handleCall = useCallback(() => {
     // Open phone dialer with the safety number
@@ -133,9 +93,8 @@ export const SOSButton = ({ className }: SOSButtonProps) => {
   }, []);
 
   const handleSOSPress = useCallback(() => {
-    getLocation(); // Get location when opening SOS dialog
     setIsOpen(true);
-  }, [getLocation]);
+  }, []);
 
   const stopAudio = useCallback(() => {
     if (audioRef.current) {

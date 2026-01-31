@@ -362,6 +362,7 @@ const Map = () => {
       {/* SOS Emergency Button */}
       <SOSButton
         className={`absolute right-4 z-10 ${isNavigating ? "bottom-20" : showPointToPoint ? "bottom-[320px]" : selectedDestination ? "bottom-52" : "bottom-36"}`}
+        userLocation={effectiveLocation}
       />
 
       {/* Report FAB */}
