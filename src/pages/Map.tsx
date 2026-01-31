@@ -12,6 +12,7 @@ import { ReportModal } from "@/components/ReportModal";
 import { NavigationStatusBar } from "@/components/NavigationStatusBar";
 import { PointToPointSheet } from "@/components/PointToPointSheet";
 import { Route } from "@/lib/mock-data";
+import { SOSButton } from "@/components/SOSButton";
 import { useRoutes } from "@/hooks/useRoutes";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
@@ -358,19 +359,24 @@ const Map = () => {
         )}
       </AnimatePresence>
 
-      {/* Report FAB - Always visible but positioned based on nav state */}
+      {/* SOS Emergency Button */}
+      <SOSButton
+        className={`absolute right-4 z-10 ${isNavigating ? "bottom-20" : showPointToPoint ? "bottom-[320px]" : selectedDestination ? "bottom-52" : "bottom-36"}`}
+      />
+
+      {/* Report FAB */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-        className={`absolute right-4 z-10 ${isNavigating ? "bottom-8" : showPointToPoint ? "bottom-[320px]" : selectedDestination ? "bottom-40" : "bottom-24"}`}
+        className={`absolute right-4 z-10 ${isNavigating ? "bottom-8" : showPointToPoint ? "bottom-[250px]" : selectedDestination ? "bottom-40" : "bottom-24"}`}
       >
         <Button
           size="icon"
-          className="h-14 w-14 rounded-full shadow-lg bg-caution hover:bg-caution/90 text-caution-foreground"
+          className="h-12 w-12 rounded-full shadow-lg bg-caution hover:bg-caution/90 text-caution-foreground"
           onClick={() => setShowReport(true)}
         >
-          <Flag className="h-6 w-6" />
+          <Flag className="h-5 w-5" />
         </Button>
       </motion.div>
 
