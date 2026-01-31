@@ -560,15 +560,14 @@ const Map = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
             transition={{ duration: 0.25, delay: 0.15 }}
-            className="absolute inset-x-0 bottom-0 z-10 p-4 pb-safe-bottom"
+            className="absolute inset-x-0 bottom-0 z-10 p-4 pb-8"
           >
-            {/* Point-to-Point Route Button */}
-            <div className="mx-auto max-w-md">
+            <div className="mx-auto max-w-md flex justify-center">
               <Button
-                className="w-full h-14 rounded-xl shadow-lg text-base font-medium"
+                className="h-12 px-5 rounded-2xl shadow-lg text-sm font-medium"
                 onClick={handleOpenPointToPoint}
               >
-                <Navigation className="h-5 w-5 mr-3" />
+                <Navigation className="h-4 w-4 mr-2" />
                 Route between two locations
               </Button>
             </div>
