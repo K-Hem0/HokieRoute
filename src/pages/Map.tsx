@@ -11,6 +11,7 @@ import { SavedRoutesSheet } from "@/components/SavedRoutesSheet";
 import { ReportModal } from "@/components/ReportModal";
 import { NavigationStatusBar } from "@/components/NavigationStatusBar";
 import { PointToPointSheet } from "@/components/PointToPointSheet";
+import { RouteReassurance } from "@/components/RouteReassurance";
 import { MapStateIndicator } from "@/components/map/MapStateIndicator";
 import { Route } from "@/lib/mock-data";
 import { SOSButton } from "@/components/SOSButton";
@@ -459,17 +460,22 @@ const Map = () => {
               
               {/* Show route info if calculated */}
               {calculatedRoute && (
-                <div className="flex items-center gap-4 mb-3 p-2 rounded-lg bg-secondary/50">
-                  <div className="flex items-center gap-1 text-sm text-foreground">
-                    <span className="font-medium">{formatDistance(calculatedRoute.distance)}</span>
+                <>
+                  <div className="flex items-center gap-4 mb-2 p-2 rounded-lg bg-secondary/50">
+                    <div className="flex items-center gap-1 text-sm text-foreground">
+                      <span className="font-medium">{formatDistance(calculatedRoute.distance)}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-foreground">
+                      <span className="font-medium">{formatDuration(calculatedRoute.duration)}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {calculatedRoute.steps.length} steps
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-foreground">
-                    <span className="font-medium">{formatDuration(calculatedRoute.duration)}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {calculatedRoute.steps.length} steps
-                  </div>
-                </div>
+                  
+                  {/* Route reassurance - subtle expandable section */}
+                  <RouteReassurance className="mb-2 border-t border-border/50 pt-1" />
+                </>
               )}
               
               <div className="flex gap-2">
