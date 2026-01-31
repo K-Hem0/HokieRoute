@@ -55,7 +55,7 @@ const Landing = () => {
           </motion.p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight mb-4">
             Walk safer.{" "}
-            <span className="text-primary">Ride smarter.</span>
+            <span className="text-primary">Stay aware.</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-lg mx-auto">
             AI-powered route planning with real-time safety insights around Virginia Tech and downtown.
