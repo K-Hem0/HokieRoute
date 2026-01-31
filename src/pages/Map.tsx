@@ -17,6 +17,7 @@ import { useSavedRoutes } from "@/hooks/useSavedRoutes";
 import { useTheme } from "@/hooks/useTheme";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
+import { useRouting, formatDistance, formatDuration } from "@/hooks/useRouting";
 import { Heart, Search, User, LogOut, Loader2, Flag, Navigation, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,7 +42,7 @@ const Map = () => {
   const { isDark, toggleTheme } = useTheme();
   const { effectiveLocation, requestLocation } = useGeolocation();
   const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = usePlaceSearch();
-
+  const { route: calculatedRoute, loading: routeLoading, calculateRoute, clearRoute } = useRouting();
   // Request location on mount
   useEffect(() => {
     requestLocation();
@@ -105,11 +106,22 @@ const Map = () => {
     setSearchQuery("");
     setSelectedDestination(null);
     clearResults();
+    clearRoute();
   };
 
-  const handleNavigateToDestination = () => {
+  const handleNavigateToDestination = async () => {
     if (!selectedDestination) return;
-    toast.info("Route planning coming soon! For now, explore preset routes.");
+    
+    const origin = effectiveLocation || [-80.4139, 37.2296]; // Default to Blacksburg center
+    const profile = mode === "walk" ? "foot" : "bike";
+    
+    const result = await calculateRoute(origin, selectedDestination.coordinates, profile);
+    
+    if (result) {
+      toast.success(`Route found: ${formatDistance(result.distance)} • ${formatDuration(result.duration)}`);
+    } else {
+      toast.error("Could not calculate route. Try a different destination.");
+    }
   };
 
   const handleSaveRoute = async () => {
@@ -165,10 +177,12 @@ const Map = () => {
         isDark={isDark}
         userLocation={effectiveLocation}
         destinationMarker={destinationMarkerCoords}
+        calculatedRoute={calculatedRoute?.coordinates || null}
         onMapClick={() => {
           if (!showDiscovery && !showRouteDetail && !showSaved && !isNavigating) {
             setSelectedRoute(null);
             setSelectedDestination(null);
+            clearRoute();
           }
         }}
       />
@@ -252,13 +266,37 @@ const Map = () => {
                   <p className="text-xs text-muted-foreground truncate">{selectedDestination.fullAddress}</p>
                 </div>
               </div>
+              
+              {/* Show route info if calculated */}
+              {calculatedRoute && (
+                <div className="flex items-center gap-4 mb-3 p-2 rounded-lg bg-secondary/50">
+                  <div className="flex items-center gap-1 text-sm text-foreground">
+                    <span className="font-medium">{formatDistance(calculatedRoute.distance)}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-foreground">
+                    <span className="font-medium">{formatDuration(calculatedRoute.duration)}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {calculatedRoute.steps.length} steps
+                  </div>
+                </div>
+              )}
+              
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={handleClearSearch}>
                   Cancel
                 </Button>
-                <Button className="flex-1" onClick={handleNavigateToDestination}>
-                  <Navigation className="h-4 w-4 mr-2" />
-                  Navigate
+                <Button 
+                  className="flex-1" 
+                  onClick={handleNavigateToDestination}
+                  disabled={routeLoading}
+                >
+                  {routeLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Navigation className="h-4 w-4 mr-2" />
+                  )}
+                  {calculatedRoute ? "Start" : "Navigate"}
                 </Button>
               </div>
             </div>
