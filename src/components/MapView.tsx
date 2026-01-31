@@ -44,10 +44,10 @@ const createOriginIcon = () => {
           transform: translate(-50%, -50%);
           width: 16px;
           height: 16px;
-          background: #4ADE80;
+          background: #86EFAC;
           border: 3px solid white;
           border-radius: 50%;
-          box-shadow: 0 2px 8px rgba(74, 222, 128, 0.5);
+          box-shadow: 0 2px 8px rgba(134, 239, 172, 0.5);
         }
         .origin-marker-pulse {
           position: absolute;
@@ -56,7 +56,7 @@ const createOriginIcon = () => {
           transform: translate(-50%, -50%);
           width: 28px;
           height: 28px;
-          background: rgba(74, 222, 128, 0.25);
+          background: rgba(134, 239, 172, 0.25);
           border-radius: 50%;
           animation: originPulse 2s ease-out infinite;
         }
