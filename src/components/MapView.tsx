@@ -319,8 +319,8 @@ const MapView = ({
         />
       )}
 
-      {/* Heatmap toggle button */}
-      <div className="absolute top-4 right-4" style={{ zIndex: 1000 }}>
+      {/* Heatmap toggle button - positioned bottom-left above zoom controls */}
+      <div className="absolute bottom-28 left-4" style={{ zIndex: 1000 }}>
         <HeatmapToggle
           enabled={heatmapEnabled}
           onToggle={() => setHeatmapEnabled(!heatmapEnabled)}
