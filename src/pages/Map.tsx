@@ -11,6 +11,7 @@ import { SavedRoutesSheet } from "@/components/SavedRoutesSheet";
 import { ReportModal } from "@/components/ReportModal";
 import { NavigationStatusBar } from "@/components/NavigationStatusBar";
 import { PointToPointSheet } from "@/components/PointToPointSheet";
+import { MapStateIndicator } from "@/components/map/MapStateIndicator";
 import { Route } from "@/lib/mock-data";
 import { SOSButton } from "@/components/SOSButton";
 import { useRoutes } from "@/hooks/useRoutes";
@@ -263,6 +264,13 @@ const Map = () => {
         )}
       </AnimatePresence>
 
+      {/* State indicator pill */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40">
+        <AnimatePresence mode="wait">
+          <MapStateIndicator key={mapState} state={mapState} />
+        </AnimatePresence>
+      </div>
+
       {/* Top Overlay - Search bar (hidden during navigation) */}
       <AnimatePresence>
         {config.showSearch && (
@@ -271,7 +279,7 @@ const Map = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="absolute inset-x-0 top-0 z-30 p-4 pt-safe"
+            className="absolute inset-x-0 top-12 z-30 p-4 pt-safe"
           >
             <PlaceSearchInput
               value={searchQuery}
