@@ -66,7 +66,7 @@ const PlaceSearchInput = ({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-2 rounded-xl border border-border bg-card shadow-xl overflow-hidden z-50"
+            className="absolute top-full left-0 right-0 mt-2 rounded-xl border border-border bg-card shadow-xl overflow-hidden z-[60]"
           >
             {loading ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
