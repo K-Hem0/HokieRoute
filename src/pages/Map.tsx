@@ -148,15 +148,28 @@ const Map = () => {
     }
   };
 
-  const handlePointToPointPlaceSelect = (place: PlaceResult) => {
+  const handlePointToPointPlaceSelect = async (place: PlaceResult) => {
+    let newOrigin = routeOrigin;
+    let newDestination = selectedDestination;
+    
     if (activeSearchField === "origin") {
       setRouteOrigin(place);
       setOriginSearchQuery(place.name);
+      newOrigin = place;
     } else {
       setSelectedDestination(place);
       setDestSearchQuery(place.name);
+      newDestination = place;
     }
     clearResults();
+    
+    // Auto-calculate route when both locations are set
+    if (newOrigin && newDestination) {
+      const result = await calculateRoute(newOrigin.coordinates, newDestination.coordinates);
+      if (result) {
+        toast.success(`${formatDistance(result.distance)} • ${formatDuration(result.duration)}`);
+      }
+    }
   };
 
   const handleClearPointToPoint = () => {
