@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 
-// Use environment variable for Mapbox token
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
+// Mapbox public token
+const MAPBOX_TOKEN = "pk.eyJ1IjoiMmtoZW0yIiwiYSI6ImNtbDJub2t0ZzBqaDgzZG9taTNibDc4NmMifQ._--O2_C9mapakXYDWdehmQ";
 
 // Blacksburg bounding box for search bias
 const BLACKSBURG_BBOX = "-80.5,37.15,-80.35,37.35";
