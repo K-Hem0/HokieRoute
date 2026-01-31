@@ -39,7 +39,7 @@ export const PointToPointSheet = ({
   const originInputRef = useRef<HTMLInputElement>(null);
   const destInputRef = useRef<HTMLInputElement>(null);
   
-  const { results, loading, search, clear } = useDebouncedSearch({ debounceMs: 250, minLength: 1 });
+  const { results, loading, search, clear, hasSearched, currentQuery } = useDebouncedSearch({ debounceMs: 250, minLength: 1 });
 
   // Focus origin input when sheet opens
   useEffect(() => {
@@ -111,7 +111,9 @@ export const PointToPointSheet = ({
     }
   };
 
-  const showResults = activeField && (results.length > 0 || loading);
+  // Show dropdown when: actively searching OR has results OR searched but no results (to show "no results" message)
+  const activeQuery = activeField === "origin" ? originQuery : destQuery;
+  const showResults = activeField && activeQuery.length >= 1 && (results.length > 0 || loading || (hasSearched && !loading));
 
   if (!isOpen) return null;
 
@@ -244,7 +246,7 @@ export const PointToPointSheet = ({
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span>Searching...</span>
                     </div>
-                  ) : (
+                  ) : results.length > 0 ? (
                     <div className="max-h-36 overflow-y-auto">
                       {results.map((place) => (
                         <button
@@ -265,6 +267,10 @@ export const PointToPointSheet = ({
                           </div>
                         </button>
                       ))}
+                    </div>
+                  ) : (
+                    <div className="p-3 text-sm text-muted-foreground text-center">
+                      No locations found for "{activeQuery}"
                     </div>
                   )}
                 </div>

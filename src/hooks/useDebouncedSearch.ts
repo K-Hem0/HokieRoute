@@ -11,6 +11,8 @@ export const useDebouncedSearch = (options: UseDebouncedSearchOptions = {}) => {
   const { results, loading, error, searchPlaces, clearResults } = usePlaceSearch();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastQueryRef = useRef<string>("");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [currentQuery, setCurrentQuery] = useState("");
 
   const debouncedSearch = useCallback((query: string) => {
     // Clear any pending search
@@ -20,10 +22,12 @@ export const useDebouncedSearch = (options: UseDebouncedSearchOptions = {}) => {
 
     // Store the query for comparison
     lastQueryRef.current = query;
+    setCurrentQuery(query);
 
     // Clear results if query is too short
     if (!query || query.length < minLength) {
       clearResults();
+      setHasSearched(false);
       return;
     }
 
@@ -31,6 +35,7 @@ export const useDebouncedSearch = (options: UseDebouncedSearchOptions = {}) => {
     timerRef.current = setTimeout(() => {
       // Only search if query hasn't changed
       if (query === lastQueryRef.current) {
+        setHasSearched(true);
         searchPlaces(query);
       }
     }, debounceMs);
@@ -41,6 +46,8 @@ export const useDebouncedSearch = (options: UseDebouncedSearchOptions = {}) => {
       clearTimeout(timerRef.current);
     }
     lastQueryRef.current = "";
+    setCurrentQuery("");
+    setHasSearched(false);
     clearResults();
   }, [clearResults]);
 
@@ -59,5 +66,7 @@ export const useDebouncedSearch = (options: UseDebouncedSearchOptions = {}) => {
     error,
     search: debouncedSearch,
     clear,
+    hasSearched,
+    currentQuery,
   };
 };
