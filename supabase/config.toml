@@ -3,5 +3,3 @@ project_id = "lwxhbhkfogvxxuujrjou"
 [functions.elevenlabs-sos]
 verify_jwt = false
 
-[functions.snowflake-import]
-verify_jwt = false

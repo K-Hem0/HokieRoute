@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      location_safety_scores: {
+        Row: {
+          created_at: string
+          id: string
+          location: string
+          safety_score: number
+          total_risk: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location: string
+          safety_score: number
+          total_risk: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string
+          safety_score?: number
+          total_risk?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
