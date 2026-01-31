@@ -62,12 +62,12 @@ const Map = () => {
     if (showPointToPoint) return;
     
     const timer = setTimeout(() => {
-      if (searchQuery) {
+      if (searchQuery && searchQuery.length >= 1) {
         searchPlaces(searchQuery);
       } else {
         clearResults();
       }
-    }, 300);
+    }, 250);
     return () => clearTimeout(timer);
   }, [searchQuery, searchPlaces, clearResults, effectiveLocation, showPointToPoint]);
 
