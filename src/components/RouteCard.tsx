@@ -45,6 +45,11 @@ const RouteCard = ({ route, mode, onClick, variant = "compact" }: RouteCardProps
             <SafetyBadge level={route.safety_score} size="sm" showIcon={false} />
           </div>
           
+          {/* Context label */}
+          {route.contextLabel && (
+            <p className="text-xs text-muted-foreground">{route.contextLabel}</p>
+          )}
+          
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
