@@ -1,5 +1,4 @@
 import { Route } from "@/lib/mock-data";
-import { SafetyBadge } from "@/components/ui/SafetyBadge";
 import { FeatureBadge } from "@/components/ui/FeatureBadge";
 import { MapPin, Clock, ChevronRight, Lightbulb, CheckCircle, Phone, ArrowRight, Camera } from "lucide-react";
 import { Mode } from "@/components/ui/ModeToggle";
@@ -35,15 +34,12 @@ const RouteCard = ({ route, mode, onClick, variant = "compact" }: RouteCardProps
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2">
-            <h3 className={cn(
-              "font-semibold text-foreground",
-              variant === "compact" ? "text-sm" : "text-base"
-            )}>
-              {route.name}
-            </h3>
-            <SafetyBadge level={route.safety_score} size="sm" showIcon={false} />
-          </div>
+          <h3 className={cn(
+            "font-semibold text-foreground",
+            variant === "compact" ? "text-sm" : "text-base"
+          )}>
+            {route.name}
+          </h3>
           
           {/* Context label */}
           {route.contextLabel && (
