@@ -39,16 +39,14 @@ export const PointToPointSheet = ({
   const originInputRef = useRef<HTMLInputElement>(null);
   const destInputRef = useRef<HTMLInputElement>(null);
   
-  const { results, loading, search, clear, hasSearched, currentQuery } = useDebouncedSearch({ debounceMs: 250, minLength: 1 });
+  const { results, loading, search, clear, hasSearched } = useDebouncedSearch({ debounceMs: 250, minLength: 1 });
 
-  // Focus origin input when sheet opens
   useEffect(() => {
     if (isOpen && originInputRef.current) {
       setTimeout(() => originInputRef.current?.focus(), 100);
     }
   }, [isOpen]);
 
-  // Auto-calculate when both locations are set
   useEffect(() => {
     if (origin && destination) {
       calculateRoute(origin.coordinates, destination.coordinates);
@@ -74,7 +72,6 @@ export const PointToPointSheet = ({
       setOrigin(place);
       setOriginQuery(place.name);
       clear();
-      // Auto-focus destination if empty
       if (!destination) {
         setTimeout(() => destInputRef.current?.focus(), 50);
       }
@@ -111,7 +108,6 @@ export const PointToPointSheet = ({
     }
   };
 
-  // Show dropdown when: actively searching OR has results OR searched but no results (to show "no results" message)
   const activeQuery = activeField === "origin" ? originQuery : destQuery;
   const showResults = activeField && activeQuery.length >= 1 && (results.length > 0 || loading || (hasSearched && !loading));
 
@@ -126,192 +122,199 @@ export const PointToPointSheet = ({
       className="absolute inset-x-0 bottom-0 z-20"
     >
       <div className="mx-4 mb-4 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-          <h3 className="text-sm font-semibold text-foreground">Plan your walk</h3>
-          <button
-            onClick={handleClear}
-            className="p-1.5 rounded-full hover:bg-secondary transition-colors"
-          >
-            <X className="h-4 w-4 text-muted-foreground" />
-          </button>
-        </div>
-
-        {/* Input Section */}
-        <div className="p-4">
-          <div className="flex gap-3">
-            {/* Route Line Visual */}
-            <div className="flex flex-col items-center py-3">
-              <div className="w-3 h-3 rounded-full bg-primary ring-2 ring-primary/20" />
-              <div className="flex-1 w-0.5 bg-gradient-to-b from-primary to-primary/30 my-1.5" />
-              <div className="w-3 h-3 rounded-full border-2 border-primary bg-background" />
+        
+        {/* Header Section */}
+        <div className="px-4 pt-4 pb-3">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-foreground">Plan your walk</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Blacksburg • Walking</p>
             </div>
-
-            {/* Inputs */}
-            <div className="flex-1 space-y-2">
-              <div className="relative">
-                <input
-                  ref={originInputRef}
-                  type="text"
-                  value={originQuery}
-                  onChange={(e) => handleOriginChange(e.target.value)}
-                  onFocus={() => {
-                    setActiveField("origin");
-                    if (originQuery.length >= 1 && !origin) search(originQuery);
-                  }}
-                  placeholder="Starting point"
-                  className={cn(
-                    "w-full h-11 px-3 rounded-lg border bg-secondary/50 text-sm transition-all",
-                    "placeholder:text-muted-foreground focus:outline-none",
-                    activeField === "origin"
-                      ? "border-primary ring-2 ring-primary/20 bg-background"
-                      : "border-transparent hover:border-border",
-                    origin && "text-foreground font-medium"
-                  )}
-                />
-                {origin && (
-                  <button
-                    onClick={() => {
-                      setOrigin(null);
-                      setOriginQuery("");
-                      originInputRef.current?.focus();
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-secondary"
-                  >
-                    <X className="h-3.5 w-3.5 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
-
-              <div className="relative">
-                <input
-                  ref={destInputRef}
-                  type="text"
-                  value={destQuery}
-                  onChange={(e) => handleDestChange(e.target.value)}
-                  onFocus={() => {
-                    setActiveField("destination");
-                    if (destQuery.length >= 1 && !destination) search(destQuery);
-                  }}
-                  placeholder="Where to?"
-                  className={cn(
-                    "w-full h-11 px-3 rounded-lg border bg-secondary/50 text-sm transition-all",
-                    "placeholder:text-muted-foreground focus:outline-none",
-                    activeField === "destination"
-                      ? "border-primary ring-2 ring-primary/20 bg-background"
-                      : "border-transparent hover:border-border",
-                    destination && "text-foreground font-medium"
-                  )}
-                />
-                {destination && (
-                  <button
-                    onClick={() => {
-                      setDestination(null);
-                      setDestQuery("");
-                      destInputRef.current?.focus();
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-secondary"
-                  >
-                    <X className="h-3.5 w-3.5 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Swap Button */}
-            <div className="flex items-center">
-              <button
-                onClick={handleSwapLocations}
-                disabled={!origin && !destination}
-                className="p-2 rounded-full hover:bg-secondary transition-colors disabled:opacity-30"
-              >
-                <ArrowDownUp className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
+            <button
+              onClick={handleClear}
+              className="p-1.5 -mr-1 -mt-1 rounded-full hover:bg-secondary transition-colors"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
           </div>
-
-          {/* Search Results */}
-          <AnimatePresence>
-            {showResults && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-3 rounded-lg border border-border bg-background overflow-hidden">
-                  {loading ? (
-                    <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Searching...</span>
-                    </div>
-                  ) : results.length > 0 ? (
-                    <div className="max-h-36 overflow-y-auto">
-                      {results.map((place) => (
-                        <button
-                          key={place.id}
-                          onClick={() => handleSelectPlace(place)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/70 transition-colors text-left"
-                        >
-                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                            <MapPin className="h-3.5 w-3.5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">
-                              {place.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {place.fullAddress}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-3 text-sm text-muted-foreground text-center">
-                      No locations found for "{activeQuery}"
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Route Summary */}
-          <AnimatePresence>
-            {calculatedRoute && origin && destination && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="mt-3 flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10"
-              >
-                <div className="flex-1 flex items-center gap-4">
-                  <div className="text-sm">
-                    <span className="font-semibold text-foreground">
-                      {formatDistance(calculatedRoute.distance)}
-                    </span>
-                  </div>
-                  <div className="w-px h-4 bg-border" />
-                  <div className="text-sm">
-                    <span className="font-semibold text-foreground">
-                      {formatDuration(calculatedRoute.duration)}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  via walking
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
-        {/* Action Button */}
+        {/* Inputs Section */}
         <div className="px-4 pb-4">
+          <div className="rounded-xl bg-secondary/30 p-3">
+            <div className="flex gap-3">
+              {/* Route Line Visual */}
+              <div className="flex flex-col items-center py-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                <div className="flex-1 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-primary/20 my-1" />
+                <div className="w-2.5 h-2.5 rounded-full border-2 border-primary bg-background" />
+              </div>
+
+              {/* Inputs */}
+              <div className="flex-1 space-y-1.5">
+                <div className="relative">
+                  <input
+                    ref={originInputRef}
+                    type="text"
+                    value={originQuery}
+                    onChange={(e) => handleOriginChange(e.target.value)}
+                    onFocus={() => {
+                      setActiveField("origin");
+                      if (originQuery.length >= 1 && !origin) search(originQuery);
+                    }}
+                    placeholder="Starting point"
+                    className={cn(
+                      "w-full h-10 px-3 rounded-lg border text-sm transition-all",
+                      "placeholder:text-muted-foreground focus:outline-none",
+                      activeField === "origin"
+                        ? "border-primary/50 ring-1 ring-primary/20 bg-background"
+                        : "border-transparent bg-background/60 hover:bg-background",
+                      origin && "text-foreground font-medium"
+                    )}
+                  />
+                  {origin && (
+                    <button
+                      onClick={() => {
+                        setOrigin(null);
+                        setOriginQuery("");
+                        originInputRef.current?.focus();
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-secondary"
+                    >
+                      <X className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <input
+                    ref={destInputRef}
+                    type="text"
+                    value={destQuery}
+                    onChange={(e) => handleDestChange(e.target.value)}
+                    onFocus={() => {
+                      setActiveField("destination");
+                      if (destQuery.length >= 1 && !destination) search(destQuery);
+                    }}
+                    placeholder="Where to?"
+                    className={cn(
+                      "w-full h-10 px-3 rounded-lg border text-sm transition-all",
+                      "placeholder:text-muted-foreground focus:outline-none",
+                      activeField === "destination"
+                        ? "border-primary/50 ring-1 ring-primary/20 bg-background"
+                        : "border-transparent bg-background/60 hover:bg-background",
+                      destination && "text-foreground font-medium"
+                    )}
+                  />
+                  {destination && (
+                    <button
+                      onClick={() => {
+                        setDestination(null);
+                        setDestQuery("");
+                        destInputRef.current?.focus();
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-secondary"
+                    >
+                      <X className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Swap Button */}
+              <div className="flex items-center">
+                <button
+                  onClick={handleSwapLocations}
+                  disabled={!origin && !destination}
+                  className="p-2 rounded-full hover:bg-background transition-colors disabled:opacity-30"
+                >
+                  <ArrowDownUp className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+
+            {/* Search Results - inside the inputs section */}
+            <AnimatePresence>
+              {showResults && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-2 rounded-lg border border-border bg-background overflow-hidden">
+                    {loading ? (
+                      <div className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Searching...</span>
+                      </div>
+                    ) : results.length > 0 ? (
+                      <div className="max-h-32 overflow-y-auto">
+                        {results.map((place) => (
+                          <button
+                            key={place.id}
+                            onClick={() => handleSelectPlace(place)}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-secondary/50 transition-colors text-left"
+                          >
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">
+                                {place.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {place.fullAddress}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-3 py-2.5 text-sm text-muted-foreground">
+                        No locations found
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Route Summary - separate section */}
+        <AnimatePresence>
+          {calculatedRoute && origin && destination && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 pb-4">
+                <div className="flex items-center justify-center gap-6 py-2">
+                  <div className="text-center">
+                    <p className="text-lg font-semibold text-foreground tabular-nums">
+                      {formatDistance(calculatedRoute.distance)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">distance</p>
+                  </div>
+                  <div className="h-8 w-px bg-border" />
+                  <div className="text-center">
+                    <p className="text-lg font-semibold text-foreground tabular-nums">
+                      {formatDuration(calculatedRoute.duration)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">walking</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Action Section - visually separated */}
+        <div className="px-4 pb-4 pt-1 border-t border-border/50">
           <Button
-            className="w-full h-12 rounded-xl text-sm font-medium"
+            className="w-full h-12 rounded-xl text-sm font-medium mt-3"
             onClick={handleStartRoute}
             disabled={!origin || !destination || routeLoading}
           >
