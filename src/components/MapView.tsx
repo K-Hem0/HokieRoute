@@ -213,27 +213,30 @@ const MapView = ({
 
   // OpenStreetMap-based tile layers optimized for pedestrian navigation
   // CARTO Voyager: Clean, readable style with subtle labels
-  // CARTO Dark Matter: Dark mode optimized for low-light navigation
+  // CARTO Dark Matter Lite: Slightly brighter dark mode for better visibility
   const lightTiles = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-  const darkTiles = "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png";
+  const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
   const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+  // Apply brightness boost to dark mode tiles via CSS
+  const darkTileStyle = isDark ? { filter: "brightness(1.3) contrast(1.1)" } : {};
 
   const mapCenter: [number, number] = userLatLng || BLACKSBURG_CENTER;
 
-  // Route styling with navigation mode enhancement
+  // Route styling with navigation mode enhancement - brighter for dark mode
   const routeStyle = {
-    color: "#8B5CF6", // Primary violet
-    weight: isNavigating ? 7 : 5,
+    color: isDark ? "#A78BFA" : "#8B5CF6", // Lighter violet in dark mode
+    weight: isNavigating ? 8 : 6,
     opacity: 1,
     lineCap: "round" as const,
     lineJoin: "round" as const,
   };
 
-  // Route outline for better visibility
+  // Route outline for better visibility - glow effect in dark mode
   const routeOutlineStyle = {
-    color: isDark ? "#1a1a2e" : "#ffffff",
-    weight: isNavigating ? 11 : 9,
-    opacity: 0.8,
+    color: isDark ? "#7C3AED" : "#ffffff",
+    weight: isNavigating ? 14 : 12,
+    opacity: isDark ? 0.6 : 0.8,
     lineCap: "round" as const,
     lineJoin: "round" as const,
   };
@@ -241,7 +244,7 @@ const MapView = ({
   return (
     <div 
       className={`absolute inset-0 ${isNavigating ? "navigation-mode" : ""}`} 
-      style={{ zIndex: 0, isolation: 'isolate' }}
+      style={{ zIndex: 0, isolation: 'isolate', ...darkTileStyle }}
     >
       <MapContainer
         center={mapCenter}
