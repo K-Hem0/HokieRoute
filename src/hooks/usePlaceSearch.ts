@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { searchCampusBuildings, CampusBuilding } from "@/lib/campus-buildings";
 
 // Mapbox public token
 const MAPBOX_TOKEN = "pk.eyJ1IjoiMmtoZW0yIiwiYSI6ImNtbDJub2t0ZzBqaDgzZG9taTNibDc4NmMifQ._--O2_C9mapakXYDWdehmQ";
@@ -12,6 +13,19 @@ export interface PlaceResult {
   fullAddress: string;
   coordinates: [number, number];
   category?: string;
+  isLocal?: boolean; // Flag for local campus buildings
+}
+
+// Convert campus building to PlaceResult
+function campusBuildingToPlaceResult(building: CampusBuilding): PlaceResult {
+  return {
+    id: `campus-${building.id}`,
+    name: building.name,
+    fullAddress: building.address,
+    coordinates: building.coordinates,
+    category: building.category,
+    isLocal: true,
+  };
 }
 
 export const usePlaceSearch = () => {
@@ -29,6 +43,10 @@ export const usePlaceSearch = () => {
     setError(null);
 
     try {
+      // First, search local campus buildings (instant)
+      const localResults = searchCampusBuildings(query).map(campusBuildingToPlaceResult);
+
+      // Then fetch from Mapbox for additional results
       const url = new URL("https://api.mapbox.com/geocoding/v5/mapbox.places/" + encodeURIComponent(query) + ".json");
       url.searchParams.set("access_token", MAPBOX_TOKEN);
       url.searchParams.set("bbox", BLACKSBURG_BBOX);
@@ -39,19 +57,38 @@ export const usePlaceSearch = () => {
       const response = await fetch(url.toString());
       const data = await response.json();
 
+      let mapboxResults: PlaceResult[] = [];
       if (data.features) {
-        const places: PlaceResult[] = data.features.map((feature: any) => ({
+        mapboxResults = data.features.map((feature: any) => ({
           id: feature.id,
           name: feature.text,
           fullAddress: feature.place_name,
           coordinates: feature.center as [number, number],
           category: feature.properties?.category,
+          isLocal: false,
         }));
-        setResults(places);
       }
+
+      // Combine results: local first, then Mapbox (deduplicated by rough location)
+      const combined = [...localResults];
+      for (const mapboxResult of mapboxResults) {
+        // Skip if we already have a local result at roughly the same location
+        const isDuplicate = localResults.some((local) => {
+          const [lng1, lat1] = local.coordinates;
+          const [lng2, lat2] = mapboxResult.coordinates;
+          return Math.abs(lng1 - lng2) < 0.001 && Math.abs(lat1 - lat2) < 0.001;
+        });
+        if (!isDuplicate) {
+          combined.push(mapboxResult);
+        }
+      }
+
+      setResults(combined.slice(0, 5)); // Limit total results
     } catch (err: any) {
       setError(err.message);
-      setResults([]);
+      // Even on error, show local results
+      const localResults = searchCampusBuildings(query).map(campusBuildingToPlaceResult);
+      setResults(localResults);
     } finally {
       setLoading(false);
     }
