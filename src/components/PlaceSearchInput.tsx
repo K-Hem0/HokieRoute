@@ -34,11 +34,11 @@ const PlaceSearchInput = ({
     <div className={cn("relative", className)}>
       <div
         className={cn(
-          "flex h-12 items-center gap-3 rounded-full border border-border bg-card px-4 shadow-lg transition-all",
+          "flex h-12 sm:h-12 items-center gap-2 sm:gap-3 rounded-full border border-border bg-card px-3 sm:px-4 shadow-lg transition-all",
           isFocused && "border-primary ring-2 ring-primary/20"
         )}
       >
-        <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+        <Search className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
         <input
           type="text"
           value={value}
@@ -46,13 +46,13 @@ const PlaceSearchInput = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           placeholder={placeholder}
-          className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none"
+          className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none min-w-0"
         />
-        {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0" />}
         {value && !loading && (
           <button
             onClick={onClear}
-            className="p-1 hover:bg-secondary rounded-full transition-colors"
+            className="p-2 -mr-1 hover:bg-secondary rounded-full transition-colors touch-target flex items-center justify-center"
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -73,14 +73,14 @@ const PlaceSearchInput = ({
                 Searching...
               </div>
             ) : results.length > 0 ? (
-              <div className="max-h-64 overflow-y-auto">
+              <div className="max-h-64 overflow-y-auto scrollbar-hide">
                 {results.map((place) => (
                   <button
                     key={place.id}
                     onClick={() => onSelectPlace(place)}
-                    className="w-full flex items-start gap-3 p-3 hover:bg-secondary transition-colors text-left"
+                    className="w-full flex items-start gap-3 p-3 sm:p-3 hover:bg-secondary active:bg-secondary/80 transition-colors text-left touch-target"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                    <div className="flex-shrink-0 w-8 h-8 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
                       <MapPin className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">

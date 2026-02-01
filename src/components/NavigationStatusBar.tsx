@@ -59,7 +59,7 @@ const NavigationStatusBar = ({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="absolute inset-x-0 bottom-0 z-30 p-4 pb-safe-bottom"
+        className="absolute inset-x-0 bottom-0 z-30 p-3 sm:p-4 pb-safe-bottom"
       >
         <div className="mx-auto max-w-md">
           {/* Progress bar outside card */}
@@ -73,30 +73,30 @@ const NavigationStatusBar = ({
           </div>
           
           <div className="rounded-b-xl border border-t-0 border-border bg-card/95 backdrop-blur-md shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 gap-2">
               {/* Navigation icon and destination */}
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30">
-                  <Navigation className="h-5 w-5 text-primary-foreground" />
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 flex-shrink-0">
+                  <Navigation className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">Navigating</p>
-                  <p className="text-sm font-semibold text-foreground truncate max-w-[120px]">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Navigating</p>
+                  <p className="text-xs sm:text-sm font-semibold text-foreground truncate">
                     {name}
                   </p>
                 </div>
               </div>
 
               {/* Stats - compact */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                 <div className="text-center">
-                  <p className="text-lg font-bold text-foreground tabular-nums">{remainingMin}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">min</p>
+                  <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{remainingMin}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">min</p>
                 </div>
-                <div className="h-8 w-px bg-border" />
+                <div className="h-6 sm:h-8 w-px bg-border" />
                 <div className="text-center">
-                  <p className="text-lg font-bold text-foreground tabular-nums">{remainingKm}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">km</p>
+                  <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{remainingKm}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">km</p>
                 </div>
               </div>
 
@@ -105,10 +105,10 @@ const NavigationStatusBar = ({
                 variant="ghost"
                 size="sm"
                 onClick={onStop}
-                className="h-9 px-3 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                className="h-9 px-2 sm:px-3 rounded-full hover:bg-destructive/10 hover:text-destructive active:scale-95 transition-transform flex-shrink-0"
               >
-                <X className="h-4 w-4 mr-1" />
-                <span className="text-xs font-medium">End</span>
+                <X className="h-4 w-4 sm:mr-1" />
+                <span className="text-xs font-medium hidden sm:inline">End</span>
               </Button>
             </div>
           </div>
