@@ -11,7 +11,7 @@ import { SavedRoutesSheet } from "@/components/SavedRoutesSheet";
 import { ReportModal } from "@/components/ReportModal";
 import { NavigationStatusBar } from "@/components/NavigationStatusBar";
 import { PointToPointSheet } from "@/components/PointToPointSheet";
-import { RouteReassurance } from "@/components/RouteReassurance";
+import { RouteReassuranceSidebar } from "@/components/RouteReassuranceSidebar";
 import { MapStateIndicator } from "@/components/map/MapStateIndicator";
 import { Route } from "@/lib/mock-data";
 import { SOSButton } from "@/components/SOSButton";
@@ -23,7 +23,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
 import { useRouting, formatDistance, formatDuration } from "@/hooks/useRouting";
 import { useMapState } from "@/hooks/useMapState";
-import { Heart, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair, Search, Flame, X, MapPinOff } from "lucide-react";
+import { Heart, User, LogOut, Loader2, Flag, Navigation, MapPin, Crosshair, Search, Flame, X, MapPinOff, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
@@ -57,6 +57,8 @@ const Map = () => {
   const [routeDestination, setRouteDestination] = useState<PlaceResult | null>(null);
   const [showPointToPoint, setShowPointToPoint] = useState(false);
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
+  const [showReassurance, setShowReassurance] = useState(false);
+  const [reassuranceDestination, setReassuranceDestination] = useState<string | undefined>(undefined);
 
   // Map state management
   const { state: mapState, config, setExplore, setPlanning, setNavigation } = useMapState("explore");
@@ -479,11 +481,17 @@ const Map = () => {
                     </div>
                   </div>
                   
-                  {/* Route reassurance - uses real safety data */}
-                  <RouteReassurance 
-                    className="mb-2 border-t border-border/50 pt-1" 
-                    destinationName={selectedDestination?.name}
-                  />
+                  {/* Why this route button */}
+                  <button
+                    onClick={() => {
+                      setReassuranceDestination(selectedDestination?.name);
+                      setShowReassurance(true);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground/70 hover:text-foreground transition-colors border-t border-border/50"
+                  >
+                    <Shield className="h-3 w-3" />
+                    <span className="tracking-tight">Why this route?</span>
+                  </button>
                 </>
               )}
               
@@ -594,9 +602,20 @@ const Map = () => {
             calculatedRoute={calculatedRoute}
             routeLoading={routeLoading}
             calculateRoute={calculateRoute}
+            onShowReassurance={(destName) => {
+              setReassuranceDestination(destName);
+              setShowReassurance(true);
+            }}
           />
         )}
       </AnimatePresence>
+
+      {/* Route Reassurance Sidebar */}
+      <RouteReassuranceSidebar
+        isOpen={showReassurance}
+        onClose={() => setShowReassurance(false)}
+        destinationName={reassuranceDestination}
+      />
 
       {/* Route Discovery Sheet */}
       <BottomSheet
