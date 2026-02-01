@@ -13,6 +13,7 @@ import { NavigationStatusBar } from "@/components/NavigationStatusBar";
 import { PointToPointSheet } from "@/components/PointToPointSheet";
 import { RouteReassuranceSidebar } from "@/components/RouteReassuranceSidebar";
 import { MapStateIndicator } from "@/components/map/MapStateIndicator";
+import { LocationPermissionDialog } from "@/components/LocationPermissionDialog";
 import { Route } from "@/lib/mock-data";
 import { SOSButton } from "@/components/SOSButton";
 import { useRoutes } from "@/hooks/useRoutes";
@@ -60,6 +61,7 @@ const Map = () => {
   const [showReassurance, setShowReassurance] = useState(false);
   const [reassuranceDestination, setReassuranceDestination] = useState<string | undefined>(undefined);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
+  const [locationPermissionHandled, setLocationPermissionHandled] = useState(false);
 
   // Map state management
   const { state: mapState, config, setExplore, setPlanning, setNavigation } = useMapState("explore");
@@ -72,9 +74,25 @@ const Map = () => {
   const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = usePlaceSearch();
   const { route: calculatedRoute, loading: routeLoading, calculateRoute, clearRoute } = useRouting();
 
-  // Start watching location on mount for better accuracy
-  useEffect(() => {
+  // Handle location permission response
+  const handleLocationPermissionAllow = useCallback(() => {
+    setLocationPermissionHandled(true);
     startWatching();
+  }, [startWatching]);
+
+  const handleLocationPermissionDeny = useCallback(() => {
+    setLocationPermissionHandled(true);
+    // User denied - app will use default Blacksburg location
+  }, []);
+
+  // Check if permission was already granted previously
+  useEffect(() => {
+    const hasPrompted = localStorage.getItem("hokieroute-location-prompted");
+    if (hasPrompted) {
+      // Already prompted before, start watching automatically
+      setLocationPermissionHandled(true);
+      startWatching();
+    }
     return () => stopWatching();
   }, [startWatching, stopWatching]);
 
@@ -687,6 +705,12 @@ const Map = () => {
       <ReportModal
         isOpen={showReport}
         onClose={() => setShowReport(false)}
+      />
+
+      {/* Location Permission Dialog - First time visit */}
+      <LocationPermissionDialog
+        onAllow={handleLocationPermissionAllow}
+        onDeny={handleLocationPermissionDeny}
       />
 
       {/* Location Permission Denied Dialog */}
