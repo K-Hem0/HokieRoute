@@ -147,7 +147,7 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
       >
         <Button
           size="icon"
-          className="h-12 w-12 rounded-full shadow-lg bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+          className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
           onClick={handleSOSPress}
         >
           <Phone className="h-5 w-5" />
