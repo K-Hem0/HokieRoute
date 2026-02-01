@@ -53,31 +53,54 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     );
   }, []);
 
-  // Reverse geocode coordinates to get street address
+  // Reverse geocode coordinates to get the best nearby human-readable place.
+  // Prefer venue/building/POI names (e.g. "Harper Hall") over generic street addresses when available.
   const reverseGeocode = useCallback(async (lng: number, lat: number): Promise<string> => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
-        { headers: { 'User-Agent': 'SafeRouteApp/1.0' } }
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&namedetails=1&extratags=1&zoom=18`,
+        {
+          headers: {
+            // Note: browsers won't allow setting an actual User-Agent header, but keeping this
+            // (and adding Accept-Language) still helps in some environments.
+            "User-Agent": "SafeRouteApp/1.0",
+            "Accept-Language": "en",
+          },
+        }
       );
       
       if (!response.ok) throw new Error('Geocoding failed');
       
       const data = await response.json();
       const addr = data.address;
+
+      // 1) Prefer explicit named place when available
+      // Nominatim often returns a POI/building name in one of these fields.
+      const placeName: string | undefined =
+        (typeof data.name === "string" && data.name.trim() ? data.name.trim() : undefined) ||
+        (data.namedetails && typeof data.namedetails.name === "string" && data.namedetails.name.trim()
+          ? data.namedetails.name.trim()
+          : undefined) ||
+        (addr && typeof addr.building === "string" && addr.building.trim() ? addr.building.trim() : undefined) ||
+        (addr && typeof addr.amenity === "string" && addr.amenity.trim() ? addr.amenity.trim() : undefined) ||
+        (addr && typeof addr.tourism === "string" && addr.tourism.trim() ? addr.tourism.trim() : undefined);
       
-      // Build a concise address string
+      // 2) Build a concise address string (used as fallback or appended context)
       const parts: string[] = [];
       if (addr.house_number && addr.road) {
         parts.push(`${addr.house_number} ${addr.road}`);
       } else if (addr.road) {
         parts.push(addr.road);
-      } else if (addr.building) {
-        parts.push(addr.building);
       }
       
       if (addr.city || addr.town || addr.village) {
         parts.push(addr.city || addr.town || addr.village);
+      }
+
+      // If we got a POI/building name, prefer it. If we also have street/city context, append it.
+      if (placeName) {
+        const context = parts.length > 0 ? ` (${parts.join(", ")})` : "";
+        return `${placeName}${context}`;
       }
       
       return parts.length > 0 ? parts.join(', ') : data.display_name?.split(',').slice(0, 2).join(',') || 'Unknown location';
