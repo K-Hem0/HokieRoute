@@ -31,10 +31,10 @@ const PlaceSearchInput = ({
   const showResults = isFocused && value.length >= 1 && (results.length > 0 || loading || (hasSearched && !loading));
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative mx-auto max-w-md", className)}>
       <div
         className={cn(
-          "flex h-12 sm:h-12 items-center gap-2 sm:gap-3 rounded-full border border-border bg-card px-3 sm:px-4 shadow-lg transition-all",
+          "flex h-11 sm:h-12 items-center gap-2 sm:gap-3 rounded-full border border-border bg-card px-3 sm:px-4 shadow-lg transition-all",
           isFocused && "border-primary ring-2 ring-primary/20"
         )}
       >
@@ -52,7 +52,7 @@ const PlaceSearchInput = ({
         {value && !loading && (
           <button
             onClick={onClear}
-            className="p-2 -mr-1 hover:bg-secondary rounded-full transition-colors touch-target flex items-center justify-center"
+            className="p-1.5 sm:p-2 -mr-1 hover:bg-secondary rounded-full transition-colors touch-target flex items-center justify-center"
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>

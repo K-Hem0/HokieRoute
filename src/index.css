@@ -246,6 +246,11 @@
     padding-top: env(safe-area-inset-top);
   }
 
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Backward compat alias */
   .pb-safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -256,6 +261,66 @@
 
   .pr-safe {
     padding-right: env(safe-area-inset-right);
+  }
+
+  /* Safe area insets with fallback values */
+  .inset-safe-top {
+    top: max(env(safe-area-inset-top), 0px);
+  }
+
+  .inset-safe-bottom {
+    bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+
+  /* Map UI Z-Index Layers (mobile-first, non-overlapping) */
+  /* Layer 1: Map base (z-0) */
+  /* Layer 2: Map overlays like dim/heatmap (z-5) */
+  /* Layer 3: Bottom CTAs and route cards (z-10 to z-15) */
+  /* Layer 4: FAB buttons (z-20) */
+  /* Layer 5: Side controls (z-25) */
+  /* Layer 6: Search bar (z-30) */
+  /* Layer 7: State indicators (z-35) */
+  /* Layer 8: Navigation status bar (z-40) */
+  /* Layer 9: Sheets and modals (z-50+) */
+  /* Layer 10: Search dropdown (z-60) */
+
+  /* Mobile control sizes */
+  .control-btn-sm {
+    @apply h-10 w-10;
+  }
+
+  .control-btn {
+    @apply h-11 w-11 sm:h-12 sm:w-12;
+  }
+
+  /* 8pt grid spacing helpers */
+  .gap-8pt {
+    gap: 8px;
+  }
+
+  .p-8pt {
+    padding: 8px;
+  }
+
+  .m-8pt {
+    margin: 8px;
+  }
+
+  /* Mobile-first safe zones */
+  /* Top zone: Enough space for search bar + padding */
+  .top-safe-zone {
+    top: calc(env(safe-area-inset-top) + 80px);
+  }
+
+  /* Bottom zone: Space above bottom sheet CTA */
+  .bottom-safe-zone {
+    bottom: calc(env(safe-area-inset-bottom) + 100px);
+  }
+
+  @media (max-width: 374px) {
+    .top-safe-zone {
+      top: calc(env(safe-area-inset-top) + 72px);
+    }
   }
 
   /* Touch-friendly tap targets */

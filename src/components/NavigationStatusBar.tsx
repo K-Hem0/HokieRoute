@@ -59,7 +59,7 @@ const NavigationStatusBar = ({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="absolute inset-x-0 bottom-0 z-30 p-3 sm:p-4 pb-safe-bottom"
+        className="absolute inset-x-0 bottom-0 z-[40] px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom)+8px)] sm:pb-[calc(env(safe-area-inset-bottom)+12px)]"
       >
         <div className="mx-auto max-w-md">
           {/* Progress bar outside card */}
