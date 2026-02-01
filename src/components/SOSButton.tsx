@@ -304,30 +304,27 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
               </DialogHeader>
 
               <div className="space-y-3 sm:space-y-4">
-                {/* Current Location Display */}
-                <div className="rounded-lg bg-secondary/50 p-3">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground">Your location</p>
-                      {isLoadingAddress ? (
-                        <p className="text-sm text-foreground flex items-center gap-2">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Detecting...
-                        </p>
-                      ) : currentAddress ? (
-                        <p className="text-sm text-foreground truncate">{currentAddress}</p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Location unavailable</p>
-                      )}
-                      {isOnCampus && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <Shield className="h-3 w-3 text-primary" />
-                          <span className="text-xs text-primary font-medium">On VT Campus</span>
-                        </div>
-                      )}
-                    </div>
+                {/* Current Location Display - Compact */}
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50">
+                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    {isLoadingAddress ? (
+                      <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Detecting location...
+                      </span>
+                    ) : currentAddress ? (
+                      <span className="text-sm text-foreground line-clamp-1">{currentAddress}</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Location unavailable</span>
+                    )}
                   </div>
+                  {isOnCampus && (
+                    <span className="text-xs text-primary font-medium flex items-center gap-1 flex-shrink-0">
+                      <Shield className="h-3 w-3" />
+                      VT
+                    </span>
+                  )}
                 </div>
 
                 {/* Primary Call Button - Location aware */}
