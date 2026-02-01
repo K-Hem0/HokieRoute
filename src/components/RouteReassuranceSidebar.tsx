@@ -240,7 +240,7 @@ export const RouteReassuranceSidebar = ({ isOpen, onClose, destinationName }: Ro
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 20, opacity: 0 }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed top-28 right-4 z-40 w-64 bg-card/95 border border-border rounded-lg shadow-lg"
+          className="fixed top-32 right-4 z-40 w-64 bg-card/95 border border-border rounded-lg shadow-lg"
         >
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-border">
