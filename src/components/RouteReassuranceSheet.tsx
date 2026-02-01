@@ -4,15 +4,13 @@ import { X, Shield, MapPin, AlertTriangle, CheckCircle, Eye, Lightbulb, Users } 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { RouteReassuranceSheet } from "@/components/RouteReassuranceSheet";
 
-interface RouteReassuranceSidebarProps {
+interface RouteReassuranceSheetProps {
   isOpen: boolean;
   onClose: () => void;
   destinationName?: string;
-  /** Whether the point-to-point sheet is open (for mobile stacking) */
-  pointToPointOpen?: boolean;
+  /** Offset from bottom when another sheet is partially visible */
+  bottomOffset?: number;
 }
 
 interface SafetyInsight {
@@ -73,15 +71,14 @@ const isSignificantLocation = (location: string): boolean => {
   );
 };
 
-export const RouteReassuranceSidebar = ({ 
+export const RouteReassuranceSheet = ({ 
   isOpen, 
   onClose, 
   destinationName,
-  pointToPointOpen = false,
-}: RouteReassuranceSidebarProps) => {
+  bottomOffset = 0 
+}: RouteReassuranceSheetProps) => {
   const [insights, setInsights] = useState<SafetyInsight[]>([]);
   const [loading, setLoading] = useState(false);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchSafetyInsights = async () => {
@@ -242,102 +239,107 @@ export const RouteReassuranceSidebar = ({
     }
   };
 
-  // On mobile, use bottom sheet component instead
-  if (isMobile) {
-    return (
-      <RouteReassuranceSheet
-        isOpen={isOpen}
-        onClose={onClose}
-        destinationName={destinationName}
-        bottomOffset={pointToPointOpen ? 0 : 0}
-      />
-    );
-  }
-
-  // Desktop: sidebar on the right
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ x: 20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 20, opacity: 0 }}
-          transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed top-32 right-4 z-40 w-64 bg-card/95 border border-border rounded-lg shadow-lg"
-        >
-            {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold text-foreground">Why this route?</h2>
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            className="fixed inset-0 z-[55] bg-background/60 backdrop-blur-sm"
+          />
+
+          {/* Bottom Sheet */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="fixed inset-x-0 z-[60] px-3 sm:px-4"
+            style={{ 
+              bottom: `calc(env(safe-area-inset-bottom, 0px) + ${bottomOffset}px + 8px)`,
+            }}
+          >
+            <div className="mx-auto max-w-md rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <h2 className="font-semibold text-foreground">Why this route?</h2>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-full -mr-1"
+                  onClick={onClose}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 rounded-full"
-                onClick={onClose}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
 
-            {/* Content */}
-            <div className="p-3 overflow-y-auto max-h-64">
-              {destinationName && (
-                <p className="text-sm text-muted-foreground mb-4">
-                  Route to <span className="font-medium text-foreground">{destinationName}</span>
-                </p>
-              )}
+              {/* Content */}
+              <div className="px-4 py-3 max-h-[40vh] overflow-y-auto">
+                {destinationName && (
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Route to <span className="font-medium text-foreground">{destinationName}</span>
+                  </p>
+                )}
 
-              {loading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-12 rounded-lg bg-secondary/50 animate-pulse" />
-                  ))}
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-12 rounded-lg bg-secondary/50 animate-pulse" />
+                    ))}
+                  </div>
+                ) : insights.length > 0 ? (
+                  <div className="space-y-2.5">
+                    {insights.map((insight, index) => {
+                      const Icon = getIcon(insight.icon);
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.08 }}
+                          className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30"
+                        >
+                          <div className={cn(
+                            "flex h-7 w-7 items-center justify-center rounded-full flex-shrink-0",
+                            insight.type === "safe" || insight.type === "landmark" 
+                              ? "bg-safe/10" 
+                              : insight.type === "caution" 
+                              ? "bg-moderate/10" 
+                              : "bg-primary/10"
+                          )}>
+                            <Icon className={cn("h-3.5 w-3.5", getIconColor(insight.type))} />
+                          </div>
+                          <p className="text-sm text-foreground leading-relaxed pt-0.5">
+                            {insight.message}
+                          </p>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    No safety data available
+                  </p>
+                )}
+
+                {/* Footer info */}
+                <div className="mt-3 pt-2 border-t border-border/50">
+                  <p className="text-[10px] text-muted-foreground/60 text-center">
+                    Updated from campus reports
+                  </p>
                 </div>
-              ) : insights.length > 0 ? (
-                <div className="space-y-3">
-                  {insights.map((insight, index) => {
-                    const Icon = getIcon(insight.icon);
-                    return (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30"
-                      >
-                        <div className={cn(
-                          "flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0",
-                          insight.type === "safe" || insight.type === "landmark" 
-                            ? "bg-safe/10" 
-                            : insight.type === "caution" 
-                            ? "bg-moderate/10" 
-                            : "bg-primary/10"
-                        )}>
-                          <Icon className={cn("h-4 w-4", getIconColor(insight.type))} />
-                        </div>
-                        <p className="text-sm text-foreground leading-relaxed pt-1">
-                          {insight.message}
-                        </p>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  No safety data available
-                </p>
-              )}
-
-              {/* Footer info */}
-              <div className="mt-3 pt-2 border-t border-border/50">
-                <p className="text-[10px] text-muted-foreground/60 text-center">
-                  Updated from campus reports
-                </p>
               </div>
             </div>
           </motion.div>
+        </>
       )}
     </AnimatePresence>
   );
