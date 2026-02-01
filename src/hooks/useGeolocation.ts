@@ -23,74 +23,9 @@ export const useGeolocation = () => {
   
   const watchIdRef = useRef<number | null>(null);
 
-  // Dismiss the permission denied state and retry getting location
+  // Dismiss the permission denied state (user acknowledged the popup)
   const dismissPermissionDenied = useCallback(() => {
     setState((prev) => ({ ...prev, permissionDenied: false }));
-    // Retry watching - if user enabled permission in settings, this will work
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-    // Re-request location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setState((prev) => ({
-            ...prev,
-            location: [position.coords.longitude, position.coords.latitude],
-            accuracy: position.coords.accuracy,
-            loading: false,
-            error: null,
-            permissionDenied: false,
-            isWatching: false,
-          }));
-          // If successful, start watching again
-          startWatchingInternal();
-        },
-        () => {
-          // Silent fail - user still hasn't enabled permission
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    }
-  }, []);
-
-  // Internal function to start watching (used by dismissPermissionDenied)
-  const startWatchingInternal = useCallback(() => {
-    if (!navigator.geolocation) return;
-    
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-    }
-
-    setState((prev) => ({ ...prev, isWatching: true }));
-
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (position) => {
-        setState((prev) => ({
-          ...prev,
-          location: [position.coords.longitude, position.coords.latitude],
-          accuracy: position.coords.accuracy,
-          loading: false,
-          error: null,
-          permissionDenied: false,
-        }));
-      },
-      (error) => {
-        const isDenied = error.code === error.PERMISSION_DENIED;
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: error.message,
-          permissionDenied: isDenied,
-        }));
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 5000,
-      }
-    );
   }, []);
 
   // Request current position once
