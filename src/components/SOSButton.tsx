@@ -263,6 +263,7 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
       {/* SOS Dialog - Full screen on mobile, centered card on desktop */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent 
+          hideCloseButton
           className="
             fixed inset-0 z-[100] flex flex-col
             w-full h-full max-w-full max-h-full
