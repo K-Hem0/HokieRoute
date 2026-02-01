@@ -67,7 +67,7 @@ const Map = () => {
   const { user, signOut } = useAuth();
   const { savedRouteIds, toggleSaveRoute, unsaveRoute, isRouteSaved } = useSavedRoutes();
   const { isDark, toggleTheme } = useTheme();
-  const { effectiveLocation, accuracy, isAccurate, requestLocation, startWatching, stopWatching, isWatching, loading: locationLoading, permissionDenied, dismissPermissionDenied } = useGeolocation();
+  const { effectiveLocation, accuracy, isAccurate, recenter, startWatching, stopWatching, permissionDenied, dismissPermissionDenied } = useGeolocation();
   const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = usePlaceSearch();
   const { route: calculatedRoute, loading: routeLoading, calculateRoute, clearRoute } = useRouting();
 
@@ -359,34 +359,33 @@ const Map = () => {
           >
             <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
             
-            {/* Recenter / Location accuracy button */}
+            {/* Recenter button - instant, no loading */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     size="icon"
-                    className={cn(
-                      "h-12 w-12 rounded-full shadow-lg",
-                      !isAccurate && "animate-pulse"
-                    )}
+                    className="h-12 w-12 rounded-full shadow-lg"
                     variant="secondary"
-                    onClick={requestLocation}
-                    disabled={locationLoading}
+                    onClick={() => {
+                      recenter();
+                      // Clear any selected destination to trigger map recenter
+                      if (!selectedRoute && !calculatedRoute) {
+                        setSelectedDestination(null);
+                        setRouteOrigin(null);
+                        setRouteDestination(null);
+                      }
+                    }}
                   >
-                    {locationLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <Crosshair className={cn(
-                        "h-5 w-5",
-                        isAccurate ? "text-primary" : "text-muted-foreground"
-                      )} />
-                    )}
+                    <Crosshair className={cn(
+                      "h-5 w-5",
+                      isAccurate ? "text-primary" : "text-muted-foreground"
+                    )} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right">
                   <p>
-                    {accuracy ? `Accuracy: ~${Math.round(accuracy)}m` : 'Get location'}
-                    {!isAccurate && accuracy && ' (low accuracy)'}
+                    {accuracy ? `Recenter (±${Math.round(accuracy)}m)` : 'Recenter map'}
                   </p>
                 </TooltipContent>
               </Tooltip>
