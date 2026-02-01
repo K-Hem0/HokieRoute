@@ -81,15 +81,51 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     }
   }, []);
 
-  // Fetch address when dialog opens
+  // Fetch fresh location and address when dialog opens
   useEffect(() => {
-    if (isOpen && userLocation) {
-      const [lng, lat] = userLocation;
-      setIsOnCampus(checkIfOnCampus(lng, lat));
+    if (isOpen) {
       setIsLoadingAddress(true);
-      reverseGeocode(lng, lat)
-        .then(setCurrentAddress)
-        .finally(() => setIsLoadingAddress(false));
+      setCurrentAddress(null);
+      
+      // Always request fresh location when SOS dialog opens (emergency situation)
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const lng = position.coords.longitude;
+            const lat = position.coords.latitude;
+            setIsOnCampus(checkIfOnCampus(lng, lat));
+            const address = await reverseGeocode(lng, lat);
+            setCurrentAddress(address);
+            setIsLoadingAddress(false);
+          },
+          () => {
+            // Fall back to passed userLocation if fresh location fails
+            if (userLocation) {
+              const [lng, lat] = userLocation;
+              setIsOnCampus(checkIfOnCampus(lng, lat));
+              reverseGeocode(lng, lat)
+                .then(setCurrentAddress)
+                .finally(() => setIsLoadingAddress(false));
+            } else {
+              setCurrentAddress(null);
+              setIsLoadingAddress(false);
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0, // Force fresh position for emergencies
+          }
+        );
+      } else if (userLocation) {
+        const [lng, lat] = userLocation;
+        setIsOnCampus(checkIfOnCampus(lng, lat));
+        reverseGeocode(lng, lat)
+          .then(setCurrentAddress)
+          .finally(() => setIsLoadingAddress(false));
+      } else {
+        setIsLoadingAddress(false);
+      }
     }
   }, [isOpen, userLocation, reverseGeocode, checkIfOnCampus]);
 
