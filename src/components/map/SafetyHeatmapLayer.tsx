@@ -45,18 +45,47 @@ export function SafetyHeatmapLayer({ points, visible, isDark = true }: SafetyHea
   const map = useMap();
   const heatLayerRef = useRef<L.Layer | null>(null);
   const [currentZoom, setCurrentZoom] = useState(map.getZoom());
+  const [isZooming, setIsZooming] = useState(false);
+  const zoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Update zoom state on map zoom
-  const handleZoom = useCallback(() => {
+  // Handle zoom start - hide heatmap immediately
+  const handleZoomStart = useCallback(() => {
+    setIsZooming(true);
+    // Clear any pending timeout
+    if (zoomTimeoutRef.current) {
+      clearTimeout(zoomTimeoutRef.current);
+      zoomTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Handle zoom end - show heatmap after a short delay
+  const handleZoomEnd = useCallback(() => {
     setCurrentZoom(map.getZoom());
+    
+    // Clear any existing timeout
+    if (zoomTimeoutRef.current) {
+      clearTimeout(zoomTimeoutRef.current);
+    }
+    
+    // Delay showing the heatmap for smooth transition
+    zoomTimeoutRef.current = setTimeout(() => {
+      setIsZooming(false);
+      zoomTimeoutRef.current = null;
+    }, 150); // Short delay after zoom ends
   }, [map]);
 
   useEffect(() => {
-    map.on("zoomend", handleZoom);
+    map.on("zoomstart", handleZoomStart);
+    map.on("zoomend", handleZoomEnd);
+    
     return () => {
-      map.off("zoomend", handleZoom);
+      map.off("zoomstart", handleZoomStart);
+      map.off("zoomend", handleZoomEnd);
+      if (zoomTimeoutRef.current) {
+        clearTimeout(zoomTimeoutRef.current);
+      }
     };
-  }, [map, handleZoom]);
+  }, [map, handleZoomStart, handleZoomEnd]);
 
   useEffect(() => {
     // Remove existing layer
@@ -65,7 +94,8 @@ export function SafetyHeatmapLayer({ points, visible, isDark = true }: SafetyHea
       heatLayerRef.current = null;
     }
 
-    if (!visible || points.length === 0) return;
+    // Don't render if not visible, no points, or currently zooming
+    if (!visible || points.length === 0 || isZooming) return;
 
     // Convert points to heatmap format: [lat, lng, intensity]
     const heatData: [number, number, number][] = points.map((p) => [
@@ -112,7 +142,7 @@ export function SafetyHeatmapLayer({ points, visible, isDark = true }: SafetyHea
         heatLayerRef.current = null;
       }
     };
-  }, [map, points, visible, isDark, currentZoom]);
+  }, [map, points, visible, isDark, currentZoom, isZooming]);
 
   return null;
 }
