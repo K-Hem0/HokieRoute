@@ -735,7 +735,7 @@ const Map = () => {
 
       {/* Location Permission Denied Dialog */}
       <AlertDialog open={permissionDenied} onOpenChange={(open) => !open && dismissPermissionDenied()}>
-        <AlertDialogContent className="max-w-sm">
+        <AlertDialogContent className="max-w-sm w-[calc(100%-32px)] mx-auto p-5 sm:p-6">
           <AlertDialogHeader>
             <div className="flex justify-center mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
@@ -748,8 +748,8 @@ const Map = () => {
               Enable location in your browser settings to get accurate routes from your current position.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="sm:justify-center">
-            <AlertDialogAction onClick={dismissPermissionDenied}>
+          <AlertDialogFooter className="sm:justify-center pt-2">
+            <AlertDialogAction onClick={dismissPermissionDenied} className="h-11">
               I understand
             </AlertDialogAction>
           </AlertDialogFooter>

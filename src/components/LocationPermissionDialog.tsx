@@ -50,9 +50,9 @@ export const LocationPermissionDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleDeny()}>
-      <DialogContent className="sm:max-w-md mx-4 p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md w-[calc(100%-32px)] mx-auto p-0 overflow-hidden">
         {/* Header with gradient */}
-        <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-6 pb-4">
+        <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent px-5 sm:px-6 pt-6 pb-4">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -85,7 +85,7 @@ export const LocationPermissionDialog = ({
         </div>
 
         {/* Benefits list */}
-        <div className="px-6 py-4 space-y-3">
+        <div className="px-5 sm:px-6 py-4 space-y-3">
           <div className="flex items-start gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
               <Navigation className="h-4 w-4 text-primary" />
@@ -108,7 +108,7 @@ export const LocationPermissionDialog = ({
         </div>
 
         {/* Actions */}
-        <div className="px-6 pb-6 pt-2 space-y-2">
+        <div className="px-5 sm:px-6 pb-6 pt-2 space-y-2">
           <Button
             className="w-full h-12 rounded-xl text-sm font-medium"
             onClick={handleAllow}
