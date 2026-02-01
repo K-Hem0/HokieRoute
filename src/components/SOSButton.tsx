@@ -132,6 +132,30 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
   const generateEmergencyVoice = useCallback(async () => {
     setIsGeneratingVoice(true);
     
+    // CRITICAL: Create Audio element IMMEDIATELY in user gesture context
+    // This must happen BEFORE any async operations to maintain browser permission
+    if (audioRef.current) {
+      audioRef.current.pause();
+      URL.revokeObjectURL(audioRef.current.src);
+    }
+    
+    const audio = new Audio();
+    audio.preload = "auto";
+    audioRef.current = audio;
+    
+    // Set up event handlers on the pre-created element
+    audio.onplay = () => setIsPlaying(true);
+    audio.onended = () => {
+      setIsPlaying(false);
+      if (audio.src.startsWith('blob:')) {
+        URL.revokeObjectURL(audio.src);
+      }
+    };
+    audio.onerror = () => {
+      setIsPlaying(false);
+      toast.error("Failed to play audio");
+    };
+    
     try {
       let locationInfo = "Location unavailable.";
       
@@ -170,25 +194,9 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       
-      // Create and play audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-        URL.revokeObjectURL(audioRef.current.src);
-      }
-      
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      
-      audio.onplay = () => setIsPlaying(true);
-      audio.onended = () => {
-        setIsPlaying(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-      audio.onerror = () => {
-        setIsPlaying(false);
-        toast.error("Failed to play audio");
-      };
-      
+      // Set source on pre-existing element and play
+      // This works because the Audio element was created in user gesture context
+      audio.src = audioUrl;
       await audio.play();
       toast.success("Emergency voice message playing");
       
