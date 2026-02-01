@@ -211,7 +211,7 @@ const Landing = () => {
       {/* Footer */}
       <footer className="relative z-10 px-6 py-8 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm font-semibold text-foreground">VT WYA</span>
+          <span className="text-sm font-semibold text-foreground">HokieRoute</span>
           <span className="text-xs text-muted-foreground">Made for Hokies <span className="font-semibold text-primary">BY</span> Hokies</span>
         </div>
       </footer>
