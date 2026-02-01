@@ -211,8 +211,14 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
   const handleCall = useCallback((number: string, label: string) => {
     // Open phone dialer with the number
     window.location.href = `tel:${number.replace(/-/g, '')}`;
-    toast.info(`Calling ${label}...`);
-  }, []);
+    toast.info(`Calling ${label}... Voice alert will play on speaker.`);
+    
+    // Auto-generate and play voice message after a short delay
+    // This gives time for the call to connect before the message plays
+    setTimeout(() => {
+      generateEmergencyVoice();
+    }, 2000);
+  }, [generateEmergencyVoice]);
 
   const handleSOSPress = useCallback(() => {
     setIsOpen(true);
