@@ -312,7 +312,7 @@ const Map = () => {
       </AnimatePresence>
 
       {/* State indicator pill - below search bar */}
-      <div className="absolute top-28 left-1/2 -translate-x-1/2 z-40">
+      <div className="absolute top-24 left-1/2 -translate-x-1/2 z-40">
         <AnimatePresence mode="wait">
           <MapStateIndicator key={mapState} state={mapState} />
         </AnimatePresence>
