@@ -1,13 +1,27 @@
-import { useState, useCallback, useRef } from "react";
-import { Phone, Loader2, Volume2, X } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Phone, Loader2, Volume2, X, MapPin, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
-const SAFETY_NUMBER = "540-739-9854";
+// Emergency numbers - location aware
+const EMERGENCY_NUMBERS = {
+  VT_POLICE: { number: "540-231-6411", label: "VT Police", description: "Virginia Tech Campus Police" },
+  BLACKSBURG_POLICE: { number: "540-961-1150", label: "Blacksburg Police", description: "Town of Blacksburg Police" },
+  EMERGENCY_911: { number: "911", label: "911", description: "Emergency Services" },
+};
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+// VT Campus bounding box (approximate)
+const VT_CAMPUS_BOUNDS = {
+  north: 37.235,
+  south: 37.218,
+  east: -80.405,
+  west: -80.430,
+};
 
 interface SOSButtonProps {
   className?: string;
@@ -18,7 +32,20 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentAddress, setCurrentAddress] = useState<string | null>(null);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [isOnCampus, setIsOnCampus] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Check if user is on VT campus
+  const checkIfOnCampus = useCallback((lng: number, lat: number): boolean => {
+    return (
+      lat >= VT_CAMPUS_BOUNDS.south &&
+      lat <= VT_CAMPUS_BOUNDS.north &&
+      lng >= VT_CAMPUS_BOUNDS.west &&
+      lng <= VT_CAMPUS_BOUNDS.east
+    );
+  }, []);
 
   // Reverse geocode coordinates to get street address
   const reverseGeocode = useCallback(async (lng: number, lat: number): Promise<string> => {
@@ -54,6 +81,18 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     }
   }, []);
 
+  // Fetch address when dialog opens
+  useEffect(() => {
+    if (isOpen && userLocation) {
+      const [lng, lat] = userLocation;
+      setIsOnCampus(checkIfOnCampus(lng, lat));
+      setIsLoadingAddress(true);
+      reverseGeocode(lng, lat)
+        .then(setCurrentAddress)
+        .finally(() => setIsLoadingAddress(false));
+    }
+  }, [isOpen, userLocation, reverseGeocode, checkIfOnCampus]);
+
   const generateEmergencyVoice = useCallback(async () => {
     setIsGeneratingVoice(true);
     
@@ -62,7 +101,7 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
       
       if (userLocation) {
         const [lng, lat] = userLocation;
-        const address = await reverseGeocode(lng, lat);
+        const address = currentAddress || await reverseGeocode(lng, lat);
         locationInfo = `The caller is located near ${address}.`;
       }
       
@@ -116,12 +155,12 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     } finally {
       setIsGeneratingVoice(false);
     }
-  }, [userLocation, reverseGeocode]);
+  }, [userLocation, currentAddress, reverseGeocode]);
 
-  const handleCall = useCallback(() => {
-    // Open phone dialer with the safety number
-    window.location.href = `tel:${SAFETY_NUMBER.replace(/-/g, '')}`;
-    toast.info(`Calling ${SAFETY_NUMBER}...`);
+  const handleCall = useCallback((number: string, label: string) => {
+    // Open phone dialer with the number
+    window.location.href = `tel:${number.replace(/-/g, '')}`;
+    toast.info(`Calling ${label}...`);
   }, []);
 
   const handleSOSPress = useCallback(() => {
@@ -135,6 +174,9 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
       setIsPlaying(false);
     }
   }, []);
+
+  // Get recommended emergency contact based on location
+  const primaryContact = isOnCampus ? EMERGENCY_NUMBERS.VT_POLICE : EMERGENCY_NUMBERS.BLACKSBURG_POLICE;
 
   return (
     <>
@@ -162,68 +204,123 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
               🆘 Emergency SOS
             </DialogTitle>
             <DialogDescription className="text-center">
-              Need immediate help? Use the options below.
+              Need immediate help? Call emergency services.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Call Button */}
+            {/* Current Location Display */}
+            <div className="rounded-lg bg-secondary/50 p-3">
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground">Your location</p>
+                  {isLoadingAddress ? (
+                    <p className="text-sm text-foreground flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Detecting...
+                    </p>
+                  ) : currentAddress ? (
+                    <p className="text-sm text-foreground truncate">{currentAddress}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Location unavailable</p>
+                  )}
+                  {isOnCampus && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Shield className="h-3 w-3 text-primary" />
+                      <span className="text-xs text-primary font-medium">On VT Campus</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Primary Call Button - Location aware */}
             <Button
               className="w-full h-14 text-lg bg-destructive hover:bg-destructive/90"
-              onClick={handleCall}
+              onClick={() => handleCall(primaryContact.number, primaryContact.label)}
             >
               <Phone className="h-5 w-5 mr-3" />
-              Call Safety Line: {SAFETY_NUMBER}
+              {primaryContact.label}: {primaryContact.number}
             </Button>
-
-            {/* Generate Voice Message */}
-            <Button
-              variant="secondary"
-              className="w-full h-12"
-              onClick={generateEmergencyVoice}
-              disabled={isGeneratingVoice || isPlaying}
-            >
-              {isGeneratingVoice ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating voice message...
-                </>
-              ) : isPlaying ? (
-                <>
-                  <Volume2 className="h-4 w-4 mr-2 animate-pulse" />
-                  Playing emergency message...
-                </>
-              ) : (
-                <>
-                  <Volume2 className="h-4 w-4 mr-2" />
-                  Play Emergency Voice Alert
-                </>
-              )}
-            </Button>
-
-            {/* Stop Audio */}
-            <AnimatePresence>
-              {isPlaying && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={stopAudio}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Stop Audio
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <p className="text-xs text-muted-foreground text-center pt-2">
-              The voice message will be generated using AI to alert nearby people or play during a call.
+            <p className="text-xs text-center text-muted-foreground -mt-2">
+              {primaryContact.description}
             </p>
+
+            {/* Secondary Options */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="h-12"
+                onClick={() => handleCall(EMERGENCY_NUMBERS.EMERGENCY_911.number, EMERGENCY_NUMBERS.EMERGENCY_911.label)}
+              >
+                <Phone className="h-4 w-4 mr-2" />
+                Call 911
+              </Button>
+              <Button
+                variant="outline"
+                className="h-12"
+                onClick={() => handleCall(
+                  isOnCampus ? EMERGENCY_NUMBERS.BLACKSBURG_POLICE.number : EMERGENCY_NUMBERS.VT_POLICE.number,
+                  isOnCampus ? EMERGENCY_NUMBERS.BLACKSBURG_POLICE.label : EMERGENCY_NUMBERS.VT_POLICE.label
+                )}
+              >
+                <Phone className="h-4 w-4 mr-2" />
+                {isOnCampus ? "Town Police" : "VT Police"}
+              </Button>
+            </div>
+
+            <div className="border-t border-border pt-4">
+              {/* Generate Voice Message */}
+              <Button
+                variant="secondary"
+                className="w-full h-12"
+                onClick={generateEmergencyVoice}
+                disabled={isGeneratingVoice || isPlaying}
+              >
+                {isGeneratingVoice ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating voice message...
+                  </>
+                ) : isPlaying ? (
+                  <>
+                    <Volume2 className="h-4 w-4 mr-2 animate-pulse" />
+                    Playing emergency message...
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="h-4 w-4 mr-2" />
+                    Play Emergency Voice Alert
+                  </>
+                )}
+              </Button>
+
+              {/* Stop Audio */}
+              <AnimatePresence>
+                {isPlaying && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-2"
+                  >
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={stopAudio}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Stop Audio
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <p className="text-xs text-muted-foreground text-center pt-3">
+                Voice alert includes your current location for first responders.
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
