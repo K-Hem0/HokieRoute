@@ -500,7 +500,7 @@ const Map = () => {
         )}
       </AnimatePresence>
 
-      {/* FAB Buttons Container (SOS + Report) */}
+      {/* FAB Buttons Container (SOS + Report) - Bottom Left */}
       <AnimatePresence>
         {config.showFABs && (
           <motion.div
@@ -509,9 +509,9 @@ const Map = () => {
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              "absolute right-4 z-10 flex flex-col gap-3",
+              "absolute left-4 z-10 flex flex-row gap-3",
               showPointToPoint ? "bottom-[250px]" : 
-              selectedDestination ? "bottom-40" : "bottom-24"
+              selectedDestination ? "bottom-40" : "bottom-6"
             )}
           >
             {/* SOS Emergency Button */}
