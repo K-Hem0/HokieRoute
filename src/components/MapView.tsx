@@ -6,6 +6,7 @@ import { Route } from "@/lib/mock-data";
 import { SafetyHeatmapLayer } from "./map/SafetyHeatmapLayer";
 import { useHeatmapData } from "@/hooks/useHeatmapData";
 import { Loader2, MapPin } from "lucide-react";
+import { reverseGeocode } from "@/lib/reverse-geocode";
 // Blacksburg, VA center
 const BLACKSBURG_CENTER: [number, number] = [37.2296, -80.4139]; // [lat, lng] for Leaflet
 
@@ -121,47 +122,7 @@ const createUserIcon = () => {
   });
 };
 
-// Reverse geocode to get address from coordinates
-const reverseGeocodeLocation = async (lng: number, lat: number): Promise<string> => {
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&namedetails=1&extratags=1&zoom=18`,
-      { headers: { "Accept-Language": "en" } }
-    );
-    
-    if (!response.ok) throw new Error("Geocoding failed");
-    
-    const data = await response.json();
-    const addr = data.address;
-
-    // Prefer named place/building
-    const placeName: string | undefined =
-      (typeof data.name === "string" && data.name.trim() ? data.name.trim() : undefined) ||
-      (data.namedetails?.name?.trim() || undefined) ||
-      (addr?.building?.trim() || undefined) ||
-      (addr?.amenity?.trim() || undefined);
-
-    const parts: string[] = [];
-    if (addr?.house_number && addr?.road) {
-      parts.push(`${addr.house_number} ${addr.road}`);
-    } else if (addr?.road) {
-      parts.push(addr.road);
-    }
-
-    if (addr?.city || addr?.town || addr?.village) {
-      parts.push(addr.city || addr.town || addr.village);
-    }
-
-    if (placeName) {
-      const context = parts.length > 0 ? ` (${parts.join(", ")})` : "";
-      return `${placeName}${context}`;
-    }
-
-    return parts.length > 0 ? parts.join(", ") : data.display_name?.split(",").slice(0, 2).join(",") || "Unknown location";
-  } catch {
-    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  }
-};
+// Reverse geocode now uses shared utility from @/lib/reverse-geocode
 
 // User location marker with popup showing address
 const UserLocationMarker = ({ position, userLocation }: { position: [number, number]; userLocation: [number, number] }) => {
@@ -173,9 +134,11 @@ const UserLocationMarker = ({ position, userLocation }: { position: [number, num
     if (address) return; // Already fetched
     
     setLoading(true);
-    const [lng, lat] = userLocation; // userLocation is [lng, lat]
-    const result = await reverseGeocodeLocation(lng, lat);
-    setAddress(result);
+    // userLocation is [lng, lat] (GeoJSON convention)
+    // reverseGeocode expects (lat, lng)
+    const [lng, lat] = userLocation;
+    const result = await reverseGeocode(lat, lng);
+    setAddress(result.label);
     setLoading(false);
   }, [address, userLocation]);
 
