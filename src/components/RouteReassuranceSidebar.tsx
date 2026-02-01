@@ -243,7 +243,7 @@ export const RouteReassuranceSidebar = ({ isOpen, onClose, destinationName }: Ro
           className="fixed top-20 right-3 z-40 w-64 max-w-[75vw] bg-card/95 border border-border rounded-xl shadow-lg"
         >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center justify-between p-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />
                 <h2 className="font-semibold text-foreground">Why this route?</h2>
@@ -259,7 +259,7 @@ export const RouteReassuranceSidebar = ({ isOpen, onClose, destinationName }: Ro
             </div>
 
             {/* Content */}
-            <div className="p-4 overflow-y-auto max-h-[calc(100vh-4rem)]">
+            <div className="p-3 overflow-y-auto max-h-64">
               {destinationName && (
                 <p className="text-sm text-muted-foreground mb-4">
                   Route to <span className="font-medium text-foreground">{destinationName}</span>
@@ -308,9 +308,9 @@ export const RouteReassuranceSidebar = ({ isOpen, onClose, destinationName }: Ro
               )}
 
               {/* Footer info */}
-              <div className="mt-6 pt-4 border-t border-border/50">
-                <p className="text-xs text-muted-foreground/70 text-center">
-                  Safety data is updated regularly based on campus reports and local conditions.
+              <div className="mt-3 pt-2 border-t border-border/50">
+                <p className="text-[10px] text-muted-foreground/60 text-center">
+                  Updated from campus reports
                 </p>
               </div>
             </div>
