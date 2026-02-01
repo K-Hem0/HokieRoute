@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Phone, Loader2, Volume2, X, MapPin, Shield } from "lucide-react";
+import { Phone, Loader2, Volume2, X, MapPin, Shield, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -208,6 +208,34 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
     }
   }, [userLocation, lastFix, freshAddress, userAddress]);
 
+  // Open native SMS app with pre-filled emergency message
+  const sendEmergencySMS = useCallback((targetNumber: string) => {
+    const fix = lastFix
+      ? [lastFix.lng, lastFix.lat] as const
+      : userLocation
+        ? [userLocation[0], userLocation[1]] as const
+        : null;
+
+    let locationText = "Location unavailable";
+    if (fix) {
+      const address = freshAddress || userAddress || `${fix[1].toFixed(5)}, ${fix[0].toFixed(5)}`;
+      locationText = address;
+    }
+
+    // Format message for SMS
+    const emergencyMessage = `🆘 EMERGENCY SOS from HokieRoute App\n\nI need immediate assistance!\n\n📍 Location: ${locationText}\n\nPlease respond immediately.`;
+    
+    // Format number for sms: URL
+    const formattedNumber = targetNumber.replace(/-/g, '');
+    
+    // Use sms: URL scheme to open native Messages app
+    // Format: sms:+1XXXXXXXXXX?body=URL_ENCODED_MESSAGE
+    const smsUrl = `sms:+1${formattedNumber}?body=${encodeURIComponent(emergencyMessage)}`;
+    
+    window.open(smsUrl, '_self');
+    toast.success("Opening Messages app with emergency text...");
+  }, [lastFix, userLocation, freshAddress, userAddress]);
+
   const handleCall = useCallback((number: string, label: string) => {
     // CRITICAL: Start generating voice FIRST (in user gesture context)
     // Then open the dialer - use window.open to avoid navigating away
@@ -328,16 +356,25 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
                   )}
                 </div>
 
-                {/* Primary Call Button - Location aware */}
-                <Button
-                  className="w-full h-12 sm:h-14 text-base sm:text-lg bg-destructive hover:bg-destructive/90"
-                  onClick={() => handleCall(primaryContact.number, primaryContact.label)}
-                >
-                  <Phone className="h-5 w-5 mr-3" />
+                {/* Primary Action Buttons - Call and Text */}
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1 h-12 sm:h-14 text-base sm:text-lg bg-destructive hover:bg-destructive/90"
+                    onClick={() => handleCall(primaryContact.number, primaryContact.label)}
+                  >
+                    <Phone className="h-5 w-5 mr-2" />
+                    Call
+                  </Button>
+                  <Button
+                    className="flex-1 h-12 sm:h-14 text-base sm:text-lg bg-primary hover:bg-primary/90"
+                    onClick={() => sendEmergencySMS(primaryContact.number)}
+                  >
+                    <MessageSquare className="h-5 w-5 mr-2" />
+                    Text
+                  </Button>
+                </div>
+                <p className="text-xs text-center text-muted-foreground">
                   {primaryContact.label}: {primaryContact.number}
-                </Button>
-                <p className="text-xs text-center text-muted-foreground -mt-1 sm:-mt-2">
-                  {primaryContact.description}
                 </p>
 
                 <div className="border-t border-border pt-3 sm:pt-4">
