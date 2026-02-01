@@ -82,9 +82,9 @@ const Landing = () => {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.6 }}
-          className="mt-12 w-full max-w-md mx-auto"
+          className="mt-12 mx-auto"
         >
-          <div className="relative aspect-[4/3] rounded-2xl border border-border bg-card/50 overflow-hidden shadow-2xl">
+          <div className="relative w-72 sm:w-80 aspect-[4/3] rounded-2xl border border-border bg-card/50 overflow-hidden shadow-2xl">
             {/* Mock map grid */}
             <div className="absolute inset-0 opacity-20">
               <svg className="w-full h-full" viewBox="0 0 100 100">
