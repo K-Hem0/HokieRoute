@@ -70,7 +70,7 @@ const Map = () => {
   const { user, signOut } = useAuth();
   const { savedRouteIds, toggleSaveRoute, unsaveRoute, isRouteSaved } = useSavedRoutes();
   const { isDark, toggleTheme } = useTheme();
-  const { effectiveLocation, accuracy, isAccurate, recenter, startWatching, stopWatching, permissionDenied, dismissPermissionDenied } = useGeolocation();
+  const { location: userLocation, effectiveLocation, accuracy, isAccurate, recenter, startWatching, stopWatching, permissionDenied, dismissPermissionDenied } = useGeolocation();
   const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = usePlaceSearch();
   const { route: calculatedRoute, loading: routeLoading, calculateRoute, clearRoute } = useRouting();
 
@@ -541,7 +541,8 @@ const Map = () => {
             className="absolute left-3 sm:left-4 z-20 flex flex-row gap-2 sm:gap-3 bottom-[calc(env(safe-area-inset-bottom)+24px)]"
           >
             {/* SOS Emergency Button */}
-            <SOSButton userLocation={effectiveLocation} />
+            {/* IMPORTANT: pass real GPS fix only (null if not granted) to avoid fallback address */}
+            <SOSButton userLocation={userLocation} />
 
             {/* Report FAB */}
             <Button
