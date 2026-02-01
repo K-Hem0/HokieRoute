@@ -31,7 +31,7 @@ const PlaceSearchInput = ({
   const showResults = isFocused && value.length >= 1 && (results.length > 0 || loading || (hasSearched && !loading));
 
   return (
-    <div className={cn("relative mx-auto max-w-md", className)}>
+    <div className={cn("relative mx-auto max-w-md z-[100]", className)}>
       <div
         className={cn(
           "flex h-11 sm:h-12 items-center gap-2 sm:gap-3 rounded-full border border-border bg-card px-3 sm:px-4 shadow-lg transition-all",
