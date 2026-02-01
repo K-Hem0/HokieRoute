@@ -121,9 +121,9 @@ export const PointToPointSheet = ({
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
       transition={{ type: "spring", damping: 25, stiffness: 300 }}
-      className="absolute inset-x-0 bottom-0 z-20"
+      className="absolute inset-x-0 bottom-0 z-[50] px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom)+8px)] sm:pb-[calc(env(safe-area-inset-bottom)+16px)]"
     >
-      <div className="mx-auto max-w-md mx-4 mb-4 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+      <div className="mx-auto max-w-md rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
         
         {/* Header section - 16px padding */}
         <div className="px-4 pt-4 pb-3">

@@ -21,16 +21,16 @@ const ThemeToggle = ({ isDark, onToggle, className }: ThemeToggleProps) => {
           <button
             onClick={onToggle}
             className={cn(
-              "flex items-center justify-center h-12 w-12 rounded-full border border-border bg-card transition-all hover:bg-secondary",
+              "flex items-center justify-center control-btn rounded-full border border-border bg-card transition-all hover:bg-secondary",
               isDark && "bg-card/90 border-primary/30",
               className
             )}
             aria-label={isDark ? "Switch to day mode" : "Switch to night mode"}
           >
             {isDark ? (
-              <Moon className="h-5 w-5 text-primary" />
+              <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             ) : (
-              <Sun className="h-5 w-5 text-primary" />
+              <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             )}
           </button>
         </TooltipTrigger>
