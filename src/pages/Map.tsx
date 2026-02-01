@@ -530,7 +530,7 @@ const Map = () => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute left-4 bottom-6 z-10 flex flex-row gap-3"
+            className="absolute left-4 bottom-6 z-30 flex flex-row gap-3"
           >
             {/* SOS Emergency Button */}
             <SOSButton userLocation={effectiveLocation} />
