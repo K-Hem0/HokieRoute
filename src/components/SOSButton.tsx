@@ -283,28 +283,6 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
               {primaryContact.description}
             </p>
 
-            {/* Secondary Options */}
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="h-12"
-                onClick={() => handleCall(EMERGENCY_NUMBERS.EMERGENCY_911.number, EMERGENCY_NUMBERS.EMERGENCY_911.label)}
-              >
-                <Phone className="h-4 w-4 mr-2" />
-                Call 911
-              </Button>
-              <Button
-                variant="outline"
-                className="h-12"
-                onClick={() => handleCall(
-                  isOnCampus ? EMERGENCY_NUMBERS.BLACKSBURG_POLICE.number : EMERGENCY_NUMBERS.VT_POLICE.number,
-                  isOnCampus ? EMERGENCY_NUMBERS.BLACKSBURG_POLICE.label : EMERGENCY_NUMBERS.VT_POLICE.label
-                )}
-              >
-                <Phone className="h-4 w-4 mr-2" />
-                {isOnCampus ? "Town Police" : "VT Police"}
-              </Button>
-            </div>
 
             <div className="border-t border-border pt-4">
               {/* Generate Voice Message */}
