@@ -235,25 +235,13 @@ export const RouteReassuranceSidebar = ({ isOpen, onClose, destinationName }: Ro
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-            className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
-          />
-
-          {/* Sidebar */}
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-y-0 right-0 z-50 w-80 max-w-[85vw] bg-card border-l border-border shadow-2xl"
-          >
+        <motion.div
+          initial={{ x: "100%", opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: "100%", opacity: 0 }}
+          transition={{ type: "spring", damping: 30, stiffness: 300 }}
+          className="fixed top-20 right-3 z-40 w-64 max-w-[75vw] bg-card/95 border border-border rounded-xl shadow-lg"
+        >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div className="flex items-center gap-2">
@@ -327,7 +315,6 @@ export const RouteReassuranceSidebar = ({ isOpen, onClose, destinationName }: Ro
               </div>
             </div>
           </motion.div>
-        </>
       )}
     </AnimatePresence>
   );
