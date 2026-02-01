@@ -16,6 +16,7 @@ import { MapStateIndicator } from "@/components/map/MapStateIndicator";
 import { LocationPermissionDialog } from "@/components/LocationPermissionDialog";
 import { Route } from "@/lib/mock-data";
 import { SOSButton } from "@/components/SOSButton";
+import { DebugOverlay } from "@/components/map/DebugOverlay";
 import { useRoutes } from "@/hooks/useRoutes";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
@@ -279,7 +280,9 @@ const Map = () => {
   const showBottomUI = !showDiscovery && !showRouteDetail && !showSaved && mapState === "explore";
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-background">
+    <div className="relative w-screen overflow-hidden bg-background h-dvh">
+      {/* Debug Overlay - only renders when ?debug=1 */}
+      <DebugOverlay />
 
       {/* Map - Layer 1 (z-0) */}
       <MapView
@@ -335,7 +338,10 @@ const Map = () => {
       </AnimatePresence>
 
       {/* State indicator pill - Layer 7 (z-35) - below search bar */}
-      <div className="absolute left-1/2 -translate-x-1/2 z-[35] top-[calc(env(safe-area-inset-top)+72px)] sm:top-[calc(env(safe-area-inset-top)+80px)]">
+      <div 
+        data-debug="state-indicator"
+        className="absolute left-1/2 -translate-x-1/2 z-[35] top-[calc(var(--safe-zone-top-controls)+4px)]"
+      >
         <AnimatePresence mode="wait">
           <MapStateIndicator key={mapState} state={mapState} />
         </AnimatePresence>
@@ -345,11 +351,12 @@ const Map = () => {
       <AnimatePresence>
         {config.showSearch && (
           <motion.div 
+            data-debug="search-bar"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="absolute inset-x-0 top-0 z-30 px-3 sm:px-4 pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+16px)]"
+            className="absolute inset-x-0 top-0 z-30 px-3 sm:px-4 pt-[max(env(safe-area-inset-top,0px)+12px,16px)]"
           >
             <PlaceSearchInput
               value={searchQuery}
@@ -369,11 +376,13 @@ const Map = () => {
       <AnimatePresence>
         {config.showSideControls && (
           <motion.div 
+            data-debug="left-controls"
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -20, opacity: 0 }}
             transition={{ duration: 0.25, delay: 0.1 }}
-            className="absolute left-3 sm:left-4 z-[25] flex flex-col gap-2 top-[calc(env(safe-area-inset-top)+104px)] sm:top-[calc(env(safe-area-inset-top)+112px)]"
+            className="absolute z-[25] flex flex-col left-safe-zone top-safe-zone"
+            style={{ gap: "var(--control-gap)" }}
           >
             <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg control-btn" />
             
@@ -391,12 +400,12 @@ const Map = () => {
                     }}
                   >
                     <Crosshair className={cn(
-                      "h-4 w-4 sm:h-5 sm:w-5",
+                      "h-4 w-4",
                       isAccurate ? "text-primary" : "text-muted-foreground"
                     )} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="right">
+                <TooltipContent side="right" sideOffset={8}>
                   <p>Recenter map</p>
                 </TooltipContent>
               </Tooltip>
@@ -415,10 +424,10 @@ const Map = () => {
                     variant="secondary"
                     onClick={() => setHeatmapEnabled(!heatmapEnabled)}
                   >
-                    <Flame className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <Flame className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="right">
+                <TooltipContent side="right" sideOffset={8}>
                   <p>{heatmapEnabled ? "Hide safety heatmap" : "Show safety heatmap"}</p>
                 </TooltipContent>
               </Tooltip>
@@ -431,11 +440,13 @@ const Map = () => {
       <AnimatePresence>
         {config.showSideControls && (
           <motion.div
+            data-debug="right-controls"
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 20, opacity: 0 }}
             transition={{ duration: 0.25, delay: 0.1 }}
-            className="absolute right-3 sm:right-4 z-[25] flex flex-col gap-2 top-[calc(env(safe-area-inset-top)+104px)] sm:top-[calc(env(safe-area-inset-top)+112px)]"
+            className="absolute z-[25] flex flex-col right-safe-zone top-safe-zone"
+            style={{ gap: "var(--control-gap)" }}
           >
             {/* Account button */}
             <Button
@@ -444,7 +455,7 @@ const Map = () => {
               variant="secondary"
               onClick={user ? handleSignOut : () => setShowAuth(true)}
             >
-              {user ? <LogOut className="h-4 w-4 sm:h-5 sm:w-5" /> : <User className="h-4 w-4 sm:h-5 sm:w-5" />}
+              {user ? <LogOut className="h-4 w-4" /> : <User className="h-4 w-4" />}
             </Button>
             
             {/* Favorites button */}
@@ -455,7 +466,7 @@ const Map = () => {
               onClick={handleSavedClick}
             >
               <Heart className={cn(
-                "h-4 w-4 sm:h-5 sm:w-5",
+                "h-4 w-4",
                 user && savedRouteIds.length > 0 && "fill-primary text-primary"
               )} />
             </Button>
@@ -467,19 +478,20 @@ const Map = () => {
       <AnimatePresence>
         {selectedDestination && mapState !== "navigation" && !showPointToPoint && (
           <motion.div
+            data-debug="bottom-cta"
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="absolute inset-x-0 bottom-0 z-[15] px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] sm:pb-[calc(env(safe-area-inset-bottom)+16px)]"
+            className="absolute inset-x-0 bottom-0 z-[15] px-3 pb-[max(env(safe-area-inset-bottom,0px)+12px,16px)]"
           >
-            <div className="mx-auto max-w-md rounded-xl border border-border bg-card/95 backdrop-blur-md p-3 sm:p-4 shadow-2xl">
+            <div className="mx-auto max-w-md rounded-xl border border-border bg-card/95 backdrop-blur-md p-3 shadow-2xl">
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
-                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                  <MapPin className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate text-sm sm:text-base">{selectedDestination.name}</p>
+                  <p className="font-medium text-foreground truncate text-sm">{selectedDestination.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{selectedDestination.fullAddress}</p>
                 </div>
               </div>
@@ -511,11 +523,11 @@ const Map = () => {
               )}
               
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 h-10 sm:h-11" onClick={handleClearSearch}>
+                <Button variant="outline" className="flex-1 h-10" onClick={handleClearSearch}>
                   Cancel
                 </Button>
                 <Button 
-                  className="flex-1 h-10 sm:h-11" 
+                  className="flex-1 h-10" 
                   onClick={handleNavigateToDestination}
                   disabled={routeLoading}
                 >
@@ -536,11 +548,16 @@ const Map = () => {
       <AnimatePresence>
         {config.showFABs && (
           <motion.div
+            data-debug="fab-container"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute left-3 sm:left-4 z-20 flex flex-col items-center gap-2 sm:gap-3 bottom-[calc(env(safe-area-inset-bottom)+24px)]"
+            className="fab-container absolute z-20 flex flex-col items-center left-safe-zone"
+            style={{ 
+              gap: "var(--control-gap)",
+              bottom: "max(env(safe-area-inset-bottom, 0px) + 16px, 20px)"
+            }}
           >
             {/* SOS Emergency Button - on top */}
             <SOSButton userLocation={userLocation} userAddress={userAddress} addressLoading={addressLoading} />
@@ -548,10 +565,10 @@ const Map = () => {
             {/* Report FAB - below SOS */}
             <Button
               size="icon"
-              className="h-11 w-11 sm:h-12 sm:w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="control-btn rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => setShowReport(true)}
             >
-              <Flag className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Flag className="h-4 w-4" />
             </Button>
           </motion.div>
         )}
@@ -561,15 +578,16 @@ const Map = () => {
       <AnimatePresence>
         {routeOrigin && routeDestination && !showPointToPoint && mapState === "explore" && (
           <motion.div
+            data-debug="bottom-cta"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-x-0 bottom-0 z-10 px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] sm:pb-[calc(env(safe-area-inset-bottom)+24px)]"
+            className="absolute inset-x-0 bottom-0 z-10 px-3 pb-[max(env(safe-area-inset-bottom,0px)+12px,16px)]"
           >
             <div className="mx-auto max-w-md flex justify-center">
               <Button
-                className="h-11 sm:h-12 px-4 sm:px-5 rounded-2xl shadow-lg text-sm font-medium"
+                className="h-11 px-4 rounded-2xl shadow-lg text-sm font-medium"
                 onClick={handleClearPointToPoint}
               >
                 <X className="h-4 w-4 mr-2" />
@@ -584,15 +602,16 @@ const Map = () => {
       <AnimatePresence>
         {showBottomUI && !selectedDestination && !showPointToPoint && !routeOrigin && (
           <motion.div
+            data-debug="bottom-cta"
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
             transition={{ duration: 0.25, delay: 0.15 }}
-            className="absolute inset-x-0 bottom-0 z-10 px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] sm:pb-[calc(env(safe-area-inset-bottom)+24px)]"
+            className="absolute inset-x-0 bottom-0 z-10 px-3 pb-[max(env(safe-area-inset-bottom,0px)+12px,16px)]"
           >
             <div className="mx-auto max-w-md flex justify-center">
               <Button
-                className="h-11 sm:h-12 px-4 sm:px-5 rounded-2xl shadow-lg text-sm font-medium"
+                className="h-11 px-4 rounded-2xl shadow-lg text-sm font-medium"
                 onClick={handleOpenPointToPoint}
               >
                 <Navigation className="h-4 w-4 mr-2" />

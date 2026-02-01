@@ -253,10 +253,10 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
       >
         <Button
           size="icon"
-          className="h-11 w-11 sm:h-12 sm:w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 active:scale-95 text-primary-foreground transition-transform"
+          className="control-btn rounded-full shadow-lg bg-primary hover:bg-primary/90 active:scale-95 text-primary-foreground transition-transform"
           onClick={handleSOSPress}
         >
-          <Phone className="h-4 w-4 sm:h-5 sm:w-5" />
+          <Phone className="h-4 w-4" />
         </Button>
       </motion.div>
 

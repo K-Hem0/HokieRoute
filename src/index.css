@@ -182,10 +182,17 @@
   /* Leaflet control styling */
   .leaflet-control-zoom {
     @apply border-border rounded-lg overflow-hidden shadow-lg;
+    margin-right: var(--safe-zone-right) !important;
+    margin-bottom: calc(var(--safe-zone-bottom) + 80px) !important;
   }
 
   .leaflet-control-zoom a {
     @apply bg-card text-foreground border-border;
+    width: var(--control-size) !important;
+    height: var(--control-size) !important;
+    line-height: var(--control-size) !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
   }
 
   .leaflet-control-zoom a:hover {
@@ -195,6 +202,8 @@
   /* Hide Leaflet attribution on mobile */
   .leaflet-control-attribution {
     @apply text-xs opacity-50;
+    margin-bottom: max(env(safe-area-inset-bottom, 0px), 4px) !important;
+    margin-right: max(env(safe-area-inset-right, 0px), 4px) !important;
   }
 
   /* Mapbox overrides (legacy) */
@@ -272,28 +281,95 @@
     bottom: max(env(safe-area-inset-bottom), 0px);
   }
 
-  /* Map UI Z-Index Layers (mobile-first, non-overlapping) */
-  /* Layer 1: Map base (z-0) */
-  /* Layer 2: Map overlays like dim/heatmap (z-5) */
-  /* Layer 3: Bottom CTAs and route cards (z-10 to z-15) */
-  /* Layer 4: FAB buttons (z-20) */
-  /* Layer 5: Side controls (z-25) */
-  /* Layer 6: Search bar (z-30) */
-  /* Layer 7: State indicators (z-35) */
-  /* Layer 8: Navigation status bar (z-40) */
-  /* Layer 9: Sheets and modals (z-50+) */
-  /* Layer 10: Search dropdown (z-60) */
+  /* ========================================
+     MOBILE LAYOUT SYSTEM - Safe Zones & Z-Index
+     ======================================== */
 
-  /* Mobile control sizes */
+  /* Z-Index Hierarchy (strict layering order) */
+  /* Layer 0: Map base */
+  /* Layer 1: Map overlays (heatmap, routes) - z-5 */
+  /* Layer 2: Bottom CTAs and route cards - z-10 to z-15 */
+  /* Layer 3: FAB buttons (SOS, Report) - z-20 */
+  /* Layer 4: Side controls - z-25 */
+  /* Layer 5: Search bar - z-30 */
+  /* Layer 6: State indicators - z-35 */
+  /* Layer 7: Navigation status bar - z-40 */
+  /* Layer 8: Bottom sheets - z-50 */
+  /* Layer 9: Search dropdown - z-60 */
+  /* Layer 10: Modals - z-100 */
+
+  /* ========================================
+     SAFE ZONE DEFINITIONS
+     ======================================== */
+
+  /* Safe zone CSS custom properties */
+  :root {
+    /* Top safe zone: search bar height + padding */
+    --safe-zone-top: calc(env(safe-area-inset-top, 0px) + 16px);
+    --safe-zone-top-controls: calc(env(safe-area-inset-top, 0px) + 80px);
+    
+    /* Bottom safe zone: above home indicator + padding */
+    --safe-zone-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    --safe-zone-bottom-with-cta: calc(env(safe-area-inset-bottom, 0px) + 80px);
+    
+    /* Side safe zones */
+    --safe-zone-left: calc(env(safe-area-inset-left, 0px) + 12px);
+    --safe-zone-right: calc(env(safe-area-inset-right, 0px) + 12px);
+    
+    /* Control sizes */
+    --control-size: 44px;
+    --control-size-sm: 40px;
+    --control-gap: 8px;
+  }
+
+  /* Small phones (≤390px) */
+  @media (max-width: 390px) {
+    :root {
+      --safe-zone-top-controls: calc(env(safe-area-inset-top, 0px) + 72px);
+      --control-size: 40px;
+      --control-size-sm: 36px;
+      --control-gap: 6px;
+    }
+  }
+
+  /* Medium phones (391-480px) */
+  @media (min-width: 391px) and (max-width: 480px) {
+    :root {
+      --safe-zone-top-controls: calc(env(safe-area-inset-top, 0px) + 76px);
+      --control-size: 42px;
+      --control-gap: 8px;
+    }
+  }
+
+  /* ========================================
+     CONTROL BUTTON SIZING
+     ======================================== */
+
   .control-btn-sm {
-    @apply h-10 w-10;
+    height: var(--control-size-sm);
+    width: var(--control-size-sm);
+    min-height: 44px;
+    min-width: 44px;
   }
 
   .control-btn {
-    @apply h-11 w-11 sm:h-12 sm:w-12;
+    height: var(--control-size);
+    width: var(--control-size);
+    min-height: 44px;
+    min-width: 44px;
   }
 
-  /* 8pt grid spacing helpers */
+  @media (min-width: 640px) {
+    .control-btn {
+      height: 48px;
+      width: 48px;
+    }
+  }
+
+  /* ========================================
+     8PT GRID SPACING HELPERS
+     ======================================== */
+
   .gap-8pt {
     gap: 8px;
   }
@@ -306,30 +382,42 @@
     margin: 8px;
   }
 
-  /* Mobile-first safe zones */
-  /* Top zone: Enough space for search bar + padding */
+  /* ========================================
+     SAFE ZONE UTILITY CLASSES
+     ======================================== */
+
+  /* Top zone positioning */
   .top-safe-zone {
-    top: calc(env(safe-area-inset-top) + 80px);
+    top: var(--safe-zone-top-controls);
   }
 
-  /* Bottom zone: Space above bottom sheet CTA */
+  /* Bottom zone positioning */
   .bottom-safe-zone {
-    bottom: calc(env(safe-area-inset-bottom) + 100px);
+    bottom: var(--safe-zone-bottom-with-cta);
   }
 
-  @media (max-width: 374px) {
-    .top-safe-zone {
-      top: calc(env(safe-area-inset-top) + 72px);
-    }
+  /* Left/right control positioning */
+  .left-safe-zone {
+    left: var(--safe-zone-left);
   }
 
-  /* Touch-friendly tap targets */
+  .right-safe-zone {
+    right: var(--safe-zone-right);
+  }
+
+  /* ========================================
+     TOUCH TARGETS
+     ======================================== */
+
   .touch-target {
     min-height: 44px;
     min-width: 44px;
   }
 
-  /* Mobile-optimized scrolling */
+  /* ========================================
+     SCROLLING UTILITIES
+     ======================================== */
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -339,14 +427,16 @@
     display: none;
   }
 
-  /* Prevent text selection on interactive elements */
   .no-select {
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
   }
 
-  /* Leaflet popup styling for user location */
+  /* ========================================
+     LEAFLET POPUP STYLING
+     ======================================== */
+
   .user-location-popup .leaflet-popup-content-wrapper {
     background: hsl(var(--card));
     color: hsl(var(--card-foreground));
@@ -375,5 +465,113 @@
 
   .user-location-popup .leaflet-popup-close-button:hover {
     color: hsl(var(--foreground));
+  }
+
+  /* ========================================
+     DEBUG OVERLAY (dev only)
+     ======================================== */
+
+  .debug-safe-zone {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    border: 2px dashed;
+    opacity: 0.5;
+  }
+
+  .debug-safe-zone-top {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--safe-zone-top-controls);
+    border-color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+  }
+
+  .debug-safe-zone-bottom {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--safe-zone-bottom-with-cta);
+    border-color: #4ecdc4;
+    background: rgba(78, 205, 196, 0.1);
+  }
+
+  .debug-safe-zone-left {
+    top: var(--safe-zone-top-controls);
+    left: 0;
+    bottom: var(--safe-zone-bottom-with-cta);
+    width: calc(var(--safe-zone-left) + var(--control-size) + 16px);
+    border-color: #ffe66d;
+    background: rgba(255, 230, 109, 0.1);
+  }
+
+  .debug-safe-zone-right {
+    top: var(--safe-zone-top-controls);
+    right: 0;
+    bottom: var(--safe-zone-bottom-with-cta);
+    width: calc(var(--safe-zone-right) + var(--control-size) + 16px);
+    border-color: #a29bfe;
+    background: rgba(162, 155, 254, 0.1);
+  }
+
+  .debug-element-box {
+    position: absolute;
+    pointer-events: none;
+    border: 1px solid #00ff00;
+    background: rgba(0, 255, 0, 0.1);
+  }
+
+  .debug-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 10px;
+    padding: 2px 4px;
+    font-family: monospace;
+    white-space: nowrap;
+  }
+
+  /* ========================================
+     BOTTOM SHEET COORDINATION
+     ======================================== */
+
+  /* When bottom sheet is open, push controls up */
+  .bottom-sheet-open .fab-container {
+    bottom: calc(var(--safe-zone-bottom) + 120px) !important;
+    transition: bottom 0.3s ease;
+  }
+
+  .bottom-sheet-expanded .fab-container {
+    bottom: calc(var(--safe-zone-bottom) + 200px) !important;
+    transition: bottom 0.3s ease;
+  }
+
+  /* ========================================
+     DYNAMIC VIEWPORT UNITS
+     ======================================== */
+
+  .h-dvh {
+    height: 100dvh;
+    height: 100vh; /* Fallback */
+  }
+
+  @supports (height: 100dvh) {
+    .h-dvh {
+      height: 100dvh;
+    }
+  }
+
+  .min-h-dvh {
+    min-height: 100dvh;
+    min-height: 100vh; /* Fallback */
+  }
+
+  @supports (min-height: 100dvh) {
+    .min-h-dvh {
+      min-height: 100dvh;
+    }
   }
 }
