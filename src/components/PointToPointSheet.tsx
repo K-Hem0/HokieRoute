@@ -1,24 +1,24 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Navigation, Loader2, X, ArrowDownUp, Shield } from "lucide-react";
+import { MapPin, Navigation, Loader2, X, ArrowDownUp, Shield, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import { PlaceResult } from "@/hooks/usePlaceSearch";
-import { formatDistance, formatDuration } from "@/hooks/useRouting";
+import { formatDistance, formatDuration, CalculatedRoute } from "@/hooks/useRouting";
 import { cn } from "@/lib/utils";
 
 interface PointToPointSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onRouteCalculated: (origin: PlaceResult, destination: PlaceResult) => void;
-  calculatedRoute: {
-    distance: number;
-    duration: number;
-    steps: any[];
-  } | null;
+  calculatedRoute: CalculatedRoute | null;
   routeLoading: boolean;
   calculateRoute: (origin: [number, number], destination: [number, number]) => Promise<any>;
   onShowReassurance?: (destinationName: string) => void;
+  onSaveRoute?: (origin: PlaceResult, destination: PlaceResult, route: CalculatedRoute) => Promise<boolean>;
+  isSaving?: boolean;
+  isLoggedIn?: boolean;
+  onLoginRequest?: () => void;
 }
 
 type ActiveField = "origin" | "destination" | null;
@@ -31,6 +31,10 @@ export const PointToPointSheet = ({
   routeLoading,
   calculateRoute,
   onShowReassurance,
+  onSaveRoute,
+  isSaving = false,
+  isLoggedIn = false,
+  onLoginRequest,
 }: PointToPointSheetProps) => {
   const [origin, setOrigin] = useState<PlaceResult | null>(null);
   const [destination, setDestination] = useState<PlaceResult | null>(null);
@@ -108,6 +112,15 @@ export const PointToPointSheet = ({
     if (origin && destination) {
       onRouteCalculated(origin, destination);
     }
+  };
+
+  const handleSaveRoute = async () => {
+    if (!calculatedRoute || !origin || !destination || !onSaveRoute) return;
+    if (!isLoggedIn) {
+      onLoginRequest?.();
+      return;
+    }
+    await onSaveRoute(origin, destination, calculatedRoute);
   };
 
   const activeQuery = activeField === "origin" ? originQuery : destQuery;
@@ -326,28 +339,46 @@ export const PointToPointSheet = ({
 
         {/* Action section */}
         <div className="px-4 pb-4 pt-1 border-t border-border/50">
-          <Button
-            className="w-full h-12 rounded-xl text-sm font-medium mt-3"
-            onClick={calculatedRoute ? handleStartRoute : handleStartRoute}
-            disabled={!origin || !destination || routeLoading}
-          >
-            {routeLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Calculating...
-              </>
-            ) : calculatedRoute ? (
-              <>
-                <Navigation className="h-4 w-4 mr-2" />
-                View route
-              </>
-            ) : (
-              <>
-                <Navigation className="h-4 w-4 mr-2" />
-                Get route
-              </>
+          <div className="flex gap-2 mt-3">
+            {calculatedRoute && onSaveRoute && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-12 w-12 rounded-xl flex-shrink-0"
+                onClick={handleSaveRoute}
+                disabled={isSaving || routeLoading}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Heart className={cn("h-4 w-4", isLoggedIn ? "hover:fill-primary" : "")} />
+                )}
+              </Button>
             )}
-          </Button>
+
+            <Button
+              className="flex-1 h-12 rounded-xl text-sm font-medium"
+              onClick={handleStartRoute}
+              disabled={!origin || !destination || routeLoading}
+            >
+              {routeLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Calculating...
+                </>
+              ) : calculatedRoute ? (
+                <>
+                  <Navigation className="h-4 w-4 mr-2" />
+                  View route
+                </>
+              ) : (
+                <>
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Get route
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </motion.div>

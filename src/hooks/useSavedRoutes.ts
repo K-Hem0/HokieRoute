@@ -127,16 +127,10 @@ export const useSavedRoutes = () => {
           duration_walk_min: durationWalkMin,
           duration_cycle_min: durationCycleMin,
           coordinates: data.route.coordinates,
-          start_point: { 
-            lng: data.origin.coordinates[0], 
-            lat: data.origin.coordinates[1],
-            name: data.origin.name 
-          },
-          end_point: { 
-            lng: data.destination.coordinates[0], 
-            lat: data.destination.coordinates[1],
-            name: data.destination.name 
-          },
+          // Keep DB format consistent with existing routes + app expectations
+          // (useRoutes casts these as [number, number])
+          start_point: data.origin.coordinates,
+          end_point: data.destination.coordinates,
           safety_score: "safe", // Must be one of: safe, moderate, caution
           safety_insight: "Your custom walking route",
         })
