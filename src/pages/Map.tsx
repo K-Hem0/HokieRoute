@@ -59,6 +59,7 @@ const Map = () => {
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const [showReassurance, setShowReassurance] = useState(false);
   const [reassuranceDestination, setReassuranceDestination] = useState<string | undefined>(undefined);
+  const [recenterTrigger, setRecenterTrigger] = useState(0);
 
   // Map state management
   const { state: mapState, config, setExplore, setPlanning, setNavigation } = useMapState("explore");
@@ -277,6 +278,7 @@ const Map = () => {
         calculatedRoute={calculatedRoute?.coordinates || null}
         heatmapEnabled={heatmapEnabled}
         onHeatmapToggle={setHeatmapEnabled}
+        recenterTrigger={recenterTrigger}
         onMapClick={() => {
           if (mapState === "explore") {
             setSelectedRoute(null);
@@ -369,12 +371,8 @@ const Map = () => {
                     variant="secondary"
                     onClick={() => {
                       recenter();
-                      // Clear any selected destination to trigger map recenter
-                      if (!selectedRoute && !calculatedRoute) {
-                        setSelectedDestination(null);
-                        setRouteOrigin(null);
-                        setRouteDestination(null);
-                      }
+                      // Increment trigger to force map recenter
+                      setRecenterTrigger(prev => prev + 1);
                     }}
                   >
                     <Crosshair className={cn(

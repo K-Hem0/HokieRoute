@@ -20,6 +20,7 @@ interface MapViewProps {
   calculatedRoute?: [number, number][] | null; // [lng, lat] pairs from OSRM
   heatmapEnabled?: boolean;
   onHeatmapToggle?: (enabled: boolean) => void;
+  recenterTrigger?: number; // Increment to force recenter
 }
 
 // Custom origin marker - simple filled circle with pulse
@@ -165,17 +166,28 @@ const MapController = ({
   destinationMarker,
   isNavigating,
   calculatedRoute,
+  recenterTrigger,
 }: {
   center: [number, number];
   selectedRoute?: Route | null;
   destinationMarker?: [number, number] | null;
   isNavigating?: boolean;
   calculatedRoute?: [number, number][] | null;
+  recenterTrigger?: number;
 }) => {
   const map = useMap();
-  const lastCenter = useRef<[number, number] | null>(null);
+  const lastRecenterTrigger = useRef<number>(0);
 
   useEffect(() => {
+    // Check if recenter was triggered
+    const forceRecenter = recenterTrigger !== undefined && recenterTrigger !== lastRecenterTrigger.current;
+    if (forceRecenter) {
+      lastRecenterTrigger.current = recenterTrigger;
+      // Force recenter to user location
+      map.flyTo(center, 16, { duration: 0.5 });
+      return;
+    }
+
     // Priority 1: Fit to calculated route
     if (calculatedRoute && calculatedRoute.length > 0) {
       const latLngs = calculatedRoute.map(([lng, lat]) => [lat, lng] as [number, number]);
@@ -201,17 +213,8 @@ const MapController = ({
       return;
     }
 
-    // Priority 4: Center on user location (only if changed significantly)
-    const [lat, lng] = center;
-    if (
-      !lastCenter.current ||
-      Math.abs(lastCenter.current[0] - lat) > 0.001 ||
-      Math.abs(lastCenter.current[1] - lng) > 0.001
-    ) {
-      map.flyTo(center, 16, { duration: 0.8 });
-      lastCenter.current = center;
-    }
-  }, [map, center, selectedRoute, destinationMarker, isNavigating, calculatedRoute]);
+    // Priority 4: Initial center on user location (only on mount)
+  }, [map, center, selectedRoute, destinationMarker, isNavigating, calculatedRoute, recenterTrigger]);
 
   return null;
 };
@@ -227,6 +230,7 @@ const MapView = ({
   calculatedRoute,
   heatmapEnabled: controlledHeatmapEnabled,
   onHeatmapToggle,
+  recenterTrigger,
 }: MapViewProps) => {
   const [mapReady, setMapReady] = useState(false);
   const [internalHeatmapEnabled, setInternalHeatmapEnabled] = useState(false);
@@ -324,6 +328,7 @@ const MapView = ({
           destinationMarker={destinationMarker}
           isNavigating={isNavigating}
           calculatedRoute={calculatedRoute}
+          recenterTrigger={recenterTrigger}
         />
 
         {/* User location marker */}
