@@ -27,14 +27,16 @@ const VT_CAMPUS_BOUNDS = {
 interface SOSButtonProps {
   className?: string;
   userLocation?: [number, number] | null; // [lng, lat] from parent
+  userAddress?: string; // Pre-fetched OSRM address from useCurrentLocation
+  addressLoading?: boolean; // Loading state for address
 }
 
-export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
+export const SOSButton = ({ className, userLocation, userAddress, addressLoading }: SOSButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState<string | null>(null);
-  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [freshAddress, setFreshAddress] = useState<string | null>(null);
+  const [isLoadingFreshAddress, setIsLoadingFreshAddress] = useState(false);
   const [isOnCampus, setIsOnCampus] = useState(false);
   const [lastFix, setLastFix] = useState<{
     lng: number;
@@ -54,39 +56,33 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     );
   }, []);
 
-  // Reverse geocode now uses shared utility from @/lib/reverse-geocode
-
-  // Fetch fresh location and address when dialog opens
+  // Fetch fresh GPS fix when dialog opens (emergency scenario needs most accurate location)
   useEffect(() => {
     if (!isOpen) return;
 
     // Reset state on each open
-    setIsLoadingAddress(true);
-    setCurrentAddress(null);
+    setIsLoadingFreshAddress(true);
+    setFreshAddress(null);
     setLastFix(null);
     setIsOnCampus(false);
 
-    const fallbackToLastKnown = async () => {
+    const fallbackToParentLocation = () => {
       if (!userLocation) {
-        setCurrentAddress(null);
-        setIsLoadingAddress(false);
+        setIsLoadingFreshAddress(false);
         return;
       }
 
-      // userLocation is [lng, lat] (GeoJSON convention)
+      // Use parent's location data
       const [lng, lat] = userLocation;
-      console.log("[SOS] Using last-known location fallback:", { lat, lng });
+      console.log("[SOS] Using parent location:", { lat, lng });
       setLastFix({ lng, lat, accuracy: null, timestamp: Date.now() });
       setIsOnCampus(checkIfOnCampus(lng, lat));
-      // reverseGeocode expects (lat, lng)
-      const result = await reverseGeocode(lat, lng);
-      setCurrentAddress(result.label);
-      setIsLoadingAddress(false);
+      setIsLoadingFreshAddress(false);
     };
 
     // Always try for a fresh fix first (emergency scenario)
     if (!navigator.geolocation) {
-      fallbackToLastKnown();
+      fallbackToParentLocation();
       return;
     }
 
@@ -104,15 +100,26 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
         });
         setIsOnCampus(checkIfOnCampus(lng, lat));
 
-        // reverseGeocode expects (lat, lng)
+        // Only fetch fresh address if coordinates differ significantly from parent
+        if (userLocation) {
+          const [parentLng, parentLat] = userLocation;
+          const distance = Math.abs(lng - parentLng) + Math.abs(lat - parentLat);
+          if (distance < 0.0001) {
+            // Close enough, use parent address
+            setIsLoadingFreshAddress(false);
+            return;
+          }
+        }
+        
+        // Fetch fresh address for significantly different location
         const result = await reverseGeocode(lat, lng);
-        setCurrentAddress(result.label);
-        setIsLoadingAddress(false);
+        setFreshAddress(result.label);
+        setIsLoadingFreshAddress(false);
       },
       (error) => {
         console.log("[SOS] GPS error:", error.message);
-        // If we can't get a fresh fix, use the best available last-known fix (if any)
-        fallbackToLastKnown();
+        // If we can't get a fresh fix, use the parent location
+        fallbackToParentLocation();
       },
       {
         enableHighAccuracy: true,
@@ -136,8 +143,8 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
 
       if (fix) {
         const [lng, lat] = fix;
-        // reverseGeocode expects (lat, lng); use cached address if available
-        const address = currentAddress || (await reverseGeocode(lat, lng)).label;
+        // Use fresh address, parent address, or fetch new one
+        const address = freshAddress || userAddress || (await reverseGeocode(lat, lng)).label;
         locationInfo = `The caller is located near ${address}.`;
       }
       
@@ -191,7 +198,7 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     } finally {
       setIsGeneratingVoice(false);
     }
-  }, [userLocation, lastFix, currentAddress, reverseGeocode]);
+  }, [userLocation, lastFix, freshAddress, userAddress]);
 
   const handleCall = useCallback((number: string, label: string) => {
     // Open phone dialer with the number
@@ -210,6 +217,10 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
       setIsPlaying(false);
     }
   }, []);
+
+  // Determine loading and address states
+  const isLoadingAddress = isLoadingFreshAddress || addressLoading;
+  const currentAddress = freshAddress || userAddress || null;
 
   // Get recommended emergency contact based on location
   // Default to VT Police during loading (per product requirement)

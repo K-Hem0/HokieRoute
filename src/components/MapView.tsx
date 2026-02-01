@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -6,7 +6,6 @@ import { Route } from "@/lib/mock-data";
 import { SafetyHeatmapLayer } from "./map/SafetyHeatmapLayer";
 import { useHeatmapData } from "@/hooks/useHeatmapData";
 import { Loader2, MapPin } from "lucide-react";
-import { reverseGeocode } from "@/lib/reverse-geocode";
 // Blacksburg, VA center
 const BLACKSBURG_CENTER: [number, number] = [37.2296, -80.4139]; // [lat, lng] for Leaflet
 
@@ -22,6 +21,8 @@ interface MapViewProps {
   heatmapEnabled?: boolean;
   onHeatmapToggle?: (enabled: boolean) => void;
   recenterTrigger?: number; // Increment to force recenter
+  userAddress?: string; // Pre-fetched OSRM address from useCurrentLocation
+  addressLoading?: boolean; // Loading state for address
 }
 
 // Custom origin marker - simple filled circle with pulse
@@ -124,37 +125,18 @@ const createUserIcon = () => {
 
 // Reverse geocode now uses shared utility from @/lib/reverse-geocode
 
-// User location marker with popup showing address
-const UserLocationMarker = ({ position, userLocation }: { position: [number, number]; userLocation: [number, number] }) => {
-  const [address, setAddress] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const markerRef = useRef<L.Marker>(null);
-
-  const handleClick = useCallback(async () => {
-    if (address) return; // Already fetched
-    
-    setLoading(true);
-    // userLocation is [lng, lat] (GeoJSON convention)
-    // reverseGeocode expects (lat, lng)
-    const [lng, lat] = userLocation;
-    const result = await reverseGeocode(lat, lng);
-    setAddress(result.label);
-    setLoading(false);
-  }, [address, userLocation]);
-
-  // Open popup when marker is clicked
-  useEffect(() => {
-    const marker = markerRef.current;
-    if (marker) {
-      marker.on("click", handleClick);
-      return () => {
-        marker.off("click", handleClick);
-      };
-    }
-  }, [handleClick]);
-
+// User location marker with popup showing pre-fetched address
+const UserLocationMarker = ({ 
+  position, 
+  address, 
+  loading 
+}: { 
+  position: [number, number]; 
+  address?: string;
+  loading?: boolean;
+}) => {
   return (
-    <Marker ref={markerRef} position={position} icon={createUserIcon()} eventHandlers={{ click: handleClick }}>
+    <Marker position={position} icon={createUserIcon()}>
       <Popup className="user-location-popup" closeButton={true} autoPan={true}>
         <div className="flex items-start gap-2 min-w-[180px] max-w-[250px]">
           <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -168,7 +150,7 @@ const UserLocationMarker = ({ position, userLocation }: { position: [number, num
             ) : address ? (
               <p className="text-sm font-medium text-foreground leading-tight">{address}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">Tap to see address</p>
+              <p className="text-sm text-muted-foreground">Location unavailable</p>
             )}
           </div>
         </div>
@@ -287,6 +269,8 @@ const MapView = ({
   heatmapEnabled: controlledHeatmapEnabled,
   onHeatmapToggle,
   recenterTrigger,
+  userAddress,
+  addressLoading,
 }: MapViewProps) => {
   const [mapReady, setMapReady] = useState(false);
   const [internalHeatmapEnabled, setInternalHeatmapEnabled] = useState(false);
@@ -388,8 +372,8 @@ const MapView = ({
         />
 
         {/* User location marker with address popup */}
-        {userLatLng && userLocation && (
-          <UserLocationMarker position={userLatLng} userLocation={userLocation} />
+        {userLatLng && (
+          <UserLocationMarker position={userLatLng} address={userAddress} loading={addressLoading} />
         )}
 
         {/* Origin marker for point-to-point routes */}
