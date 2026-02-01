@@ -123,7 +123,7 @@ export const PointToPointSheet = ({
       transition={{ type: "spring", damping: 25, stiffness: 300 }}
       className="absolute inset-x-0 bottom-0 z-20"
     >
-      <div className="mx-4 mb-4 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+      <div className="mx-auto max-w-md mx-4 mb-4 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
         
         {/* Header section - 16px padding */}
         <div className="px-4 pt-4 pb-3">
