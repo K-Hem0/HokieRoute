@@ -47,9 +47,11 @@ const NavigationStatusBar = ({
     return null;
   }
 
-  const remainingMin = Math.max(0, totalDurationMin - elapsedMin);
-  const remainingKm = (totalDistanceKm * (remainingMin / Math.max(totalDurationMin, 1))).toFixed(1);
-  const progress = totalDurationMin > 0 ? ((totalDurationMin - remainingMin) / totalDurationMin) * 100 : 0;
+  // Show total estimated time, not a countdown
+  const displayMin = totalDurationMin;
+  const displayKm = totalDistanceKm.toFixed(1);
+  // Progress bar still tracks elapsed time for visual feedback
+  const progress = totalDurationMin > 0 ? (elapsedMin / totalDurationMin) * 100 : 0;
 
   // Compact version - minimal status bar at bottom
   if (compact) {
@@ -90,12 +92,12 @@ const NavigationStatusBar = ({
               {/* Stats - compact */}
               <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                 <div className="text-center">
-                  <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{remainingMin}</p>
+                  <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{displayMin}</p>
                   <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">min</p>
                 </div>
                 <div className="h-6 sm:h-8 w-px bg-border" />
                 <div className="text-center">
-                  <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{remainingKm}</p>
+                  <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{displayKm}</p>
                   <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">km</p>
                 </div>
               </div>
@@ -158,13 +160,13 @@ const NavigationStatusBar = ({
 
           <div className="flex items-center justify-center gap-6">
             <div className="text-center">
-              <p className="text-lg font-bold text-foreground">{remainingMin}</p>
-              <p className="text-xs text-muted-foreground">min left</p>
+              <p className="text-lg font-bold text-foreground">{displayMin}</p>
+              <p className="text-xs text-muted-foreground">min</p>
             </div>
             <div className="h-8 w-px bg-border" />
             <div className="text-center">
-              <p className="text-lg font-bold text-foreground">{remainingKm}</p>
-              <p className="text-xs text-muted-foreground">km left</p>
+              <p className="text-lg font-bold text-foreground">{displayKm}</p>
+              <p className="text-xs text-muted-foreground">km</p>
             </div>
           </div>
         </div>
