@@ -89,60 +89,54 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
 
   // Fetch fresh location and address when dialog opens
   useEffect(() => {
-    if (isOpen) {
-      setIsLoadingAddress(true);
+    if (!isOpen) return;
+    
+    // Reset state on each open
+    setIsLoadingAddress(true);
+    setCurrentAddress(null);
+    setLastFix(null);
+    setIsOnCampus(false);
+    
+    // Always request fresh location when SOS dialog opens (emergency situation)
+    // We do NOT use any passed userLocation - we always get a fresh fix for emergencies
+    if (!navigator.geolocation) {
       setCurrentAddress(null);
-      setLastFix(null);
-      
-      // Always request fresh location when SOS dialog opens (emergency situation)
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const lng = position.coords.longitude;
-            const lat = position.coords.latitude;
-            setLastFix({
-              lng,
-              lat,
-              accuracy: Number.isFinite(position.coords.accuracy) ? position.coords.accuracy : null,
-              timestamp: position.timestamp,
-            });
-            setIsOnCampus(checkIfOnCampus(lng, lat));
-            const address = await reverseGeocode(lng, lat);
-            setCurrentAddress(address);
-            setIsLoadingAddress(false);
-          },
-          () => {
-            // Fall back to passed userLocation if fresh location fails
-            if (userLocation) {
-              const [lng, lat] = userLocation;
-              setLastFix({ lng, lat, accuracy: null, timestamp: Date.now() });
-              setIsOnCampus(checkIfOnCampus(lng, lat));
-              reverseGeocode(lng, lat)
-                .then(setCurrentAddress)
-                .finally(() => setIsLoadingAddress(false));
-            } else {
-              setCurrentAddress(null);
-              setIsLoadingAddress(false);
-            }
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0, // Force fresh position for emergencies
-          }
-        );
-      } else if (userLocation) {
-        const [lng, lat] = userLocation;
-        setLastFix({ lng, lat, accuracy: null, timestamp: Date.now() });
-        setIsOnCampus(checkIfOnCampus(lng, lat));
-        reverseGeocode(lng, lat)
-          .then(setCurrentAddress)
-          .finally(() => setIsLoadingAddress(false));
-      } else {
-        setIsLoadingAddress(false);
-      }
+      setIsLoadingAddress(false);
+      return;
     }
-  }, [isOpen, userLocation, reverseGeocode, checkIfOnCampus]);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lng = position.coords.longitude;
+        const lat = position.coords.latitude;
+        console.log('[SOS] Fresh GPS fix:', { lng, lat, accuracy: position.coords.accuracy });
+        
+        setLastFix({
+          lng,
+          lat,
+          accuracy: Number.isFinite(position.coords.accuracy) ? position.coords.accuracy : null,
+          timestamp: position.timestamp,
+        });
+        setIsOnCampus(checkIfOnCampus(lng, lat));
+        
+        const address = await reverseGeocode(lng, lat);
+        setCurrentAddress(address);
+        setIsLoadingAddress(false);
+      },
+      (error) => {
+        console.log('[SOS] GPS error:', error.message);
+        // No fallback to userLocation - show "Location unavailable" for emergencies
+        // This is intentional: we don't want stale/wrong locations in emergency situations
+        setCurrentAddress(null);
+        setIsLoadingAddress(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0, // CRITICAL: Force fresh position for emergencies - no cache
+      }
+    );
+  }, [isOpen, reverseGeocode, checkIfOnCampus]);
 
   const generateEmergencyVoice = useCallback(async () => {
     setIsGeneratingVoice(true);
