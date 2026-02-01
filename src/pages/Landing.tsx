@@ -71,7 +71,7 @@ const Landing = () => {
               onClick={() => navigate("/map")}
               className="group px-8 py-6 text-lg font-semibold rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-105"
             >
-              Start Safe Route
+              Start HokieRoute
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
           </motion.div>
