@@ -74,23 +74,23 @@ export function SafetyHeatmapLayer({ points, visible, isDark = true }: SafetyHea
       p.intensity,
     ]);
 
-    // Custom gradient: green (safe) -> yellow -> red (dangerous)
+    // Custom gradient: violet-based (safe violet -> warm violet -> magenta for danger)
     const gradient = isDark
       ? {
-          0.0: "rgba(34, 197, 94, 0)",    // transparent green
-          0.2: "rgba(34, 197, 94, 0.4)",   // green
-          0.4: "rgba(250, 204, 21, 0.6)",  // yellow
-          0.6: "rgba(249, 115, 22, 0.7)",  // orange
-          0.8: "rgba(239, 68, 68, 0.85)",  // red
-          1.0: "rgba(185, 28, 28, 0.95)",  // dark red
+          0.0: "rgba(139, 92, 246, 0)",       // transparent violet
+          0.2: "rgba(139, 92, 246, 0.4)",     // violet (primary)
+          0.4: "rgba(167, 139, 250, 0.5)",    // light violet
+          0.6: "rgba(192, 132, 252, 0.6)",    // purple
+          0.8: "rgba(217, 70, 239, 0.75)",    // magenta
+          1.0: "rgba(236, 72, 153, 0.9)",     // pink/danger
         }
       : {
-          0.0: "rgba(34, 197, 94, 0)",
-          0.2: "rgba(34, 197, 94, 0.5)",
-          0.4: "rgba(250, 204, 21, 0.6)",
-          0.6: "rgba(249, 115, 22, 0.7)",
-          0.8: "rgba(239, 68, 68, 0.8)",
-          1.0: "rgba(185, 28, 28, 0.9)",
+          0.0: "rgba(139, 92, 246, 0)",
+          0.2: "rgba(139, 92, 246, 0.35)",
+          0.4: "rgba(167, 139, 250, 0.45)",
+          0.6: "rgba(192, 132, 252, 0.55)",
+          0.8: "rgba(217, 70, 239, 0.7)",
+          1.0: "rgba(236, 72, 153, 0.85)",
         };
 
     // Create heat layer with zoom-responsive sizing
