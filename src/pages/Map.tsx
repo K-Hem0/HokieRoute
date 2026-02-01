@@ -61,6 +61,7 @@ const Map = () => {
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const [showReassurance, setShowReassurance] = useState(false);
   const [reassuranceDestination, setReassuranceDestination] = useState<string | undefined>(undefined);
+  const [pointToPointMinimized, setPointToPointMinimized] = useState(false);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
   const [locationPermissionHandled, setLocationPermissionHandled] = useState(false);
 
@@ -267,8 +268,26 @@ const Map = () => {
   };
 
   const handleOpenPointToPoint = () => {
+    // Close reassurance if open (mutual exclusivity on mobile)
+    if (showReassurance) {
+      setShowReassurance(false);
+    }
+    setPointToPointMinimized(false);
     setShowPointToPoint(true);
     setPlanning();
+  };
+
+  // Handle opening reassurance - minimize point-to-point on mobile
+  const handleOpenReassurance = (destName: string) => {
+    setReassuranceDestination(destName);
+    setPointToPointMinimized(true);
+    setShowReassurance(true);
+  };
+
+  // Handle closing reassurance - restore point-to-point if it was minimized
+  const handleCloseReassurance = () => {
+    setShowReassurance(false);
+    setPointToPointMinimized(false);
   };
 
   // Convert PlaceResult coordinates to the format expected by MapView
@@ -510,10 +529,7 @@ const Map = () => {
                   
                   {/* Why this route button */}
                   <button
-                    onClick={() => {
-                      setReassuranceDestination(selectedDestination?.name);
-                      setShowReassurance(true);
-                    }}
+                    onClick={() => handleOpenReassurance(selectedDestination?.name || "")}
                     className="w-full flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground/70 hover:text-foreground transition-colors border-t border-border/50"
                   >
                     <Shield className="h-3 w-3" />
@@ -622,29 +638,27 @@ const Map = () => {
         )}
       </AnimatePresence>
 
-      {/* Point-to-Point Routing UI (Planning state) */}
+      {/* Point-to-Point Routing UI (Planning state) - hidden when minimized for reassurance */}
       <AnimatePresence>
-        {showPointToPoint && mapState !== "navigation" && (
+        {showPointToPoint && mapState !== "navigation" && !pointToPointMinimized && (
           <PointToPointSheet
-            isOpen={showPointToPoint}
+            isOpen={showPointToPoint && !pointToPointMinimized}
             onClose={handleClearPointToPoint}
             onRouteCalculated={handlePointToPointComplete}
             calculatedRoute={calculatedRoute}
             routeLoading={routeLoading}
             calculateRoute={calculateRoute}
-            onShowReassurance={(destName) => {
-              setReassuranceDestination(destName);
-              setShowReassurance(true);
-            }}
+            onShowReassurance={handleOpenReassurance}
           />
         )}
       </AnimatePresence>
 
-      {/* Route Reassurance Sidebar */}
+      {/* Route Reassurance Sidebar/Sheet */}
       <RouteReassuranceSidebar
         isOpen={showReassurance}
-        onClose={() => setShowReassurance(false)}
+        onClose={handleCloseReassurance}
         destinationName={reassuranceDestination}
+        pointToPointOpen={showPointToPoint}
       />
 
       {/* Route Discovery Sheet */}
