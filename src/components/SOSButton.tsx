@@ -260,108 +260,140 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
         </Button>
       </motion.div>
 
-      {/* SOS Dialog */}
+      {/* SOS Dialog - Full screen on mobile, centered card on desktop */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md mx-4 max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-center text-destructive text-xl">
-              🆘 Emergency SOS
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Need immediate help? Call emergency services.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent 
+          className="
+            fixed inset-0 z-[100] flex flex-col
+            w-full h-full max-w-full max-h-full
+            translate-x-0 translate-y-0 left-0 top-0
+            rounded-none border-0
+            pt-[max(16px,env(safe-area-inset-top))]
+            pb-[max(16px,env(safe-area-inset-bottom))]
+            px-[max(16px,env(safe-area-inset-left))]
+            pr-[max(16px,env(safe-area-inset-right))]
+            sm:inset-auto sm:left-1/2 sm:top-1/2 
+            sm:-translate-x-1/2 sm:-translate-y-1/2
+            sm:max-w-md sm:max-h-[85vh] sm:h-auto
+            sm:rounded-lg sm:border
+            sm:pt-6 sm:pb-6 sm:px-6
+            data-[state=open]:slide-in-from-bottom-0 sm:data-[state=open]:slide-in-from-bottom-[48%]
+          "
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          {/* Close button - pinned top-right inside safe area */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="absolute right-[max(16px,env(safe-area-inset-right))] top-[max(16px,env(safe-area-inset-top))] sm:right-4 sm:top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </button>
 
-          <div className="space-y-4 py-4">
-            {/* Current Location Display */}
-            <div className="rounded-lg bg-secondary/50 p-3">
-              <div className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground">Your location</p>
-                  {isLoadingAddress ? (
-                    <p className="text-sm text-foreground flex items-center gap-2">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Detecting...
-                    </p>
-                  ) : currentAddress ? (
-                    <p className="text-sm text-foreground truncate">{currentAddress}</p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Location unavailable</p>
-                  )}
-                  {isOnCampus && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <Shield className="h-3 w-3 text-primary" />
-                      <span className="text-xs text-primary font-medium">On VT Campus</span>
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
+            <div className="flex flex-col justify-center min-h-full py-4 sm:py-0">
+              <DialogHeader className="mb-4 sm:mb-6">
+                <DialogTitle className="text-center text-destructive text-xl">
+                  🆘 Emergency SOS
+                </DialogTitle>
+                <DialogDescription className="text-center">
+                  Need immediate help? Call emergency services.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-3 sm:space-y-4">
+                {/* Current Location Display */}
+                <div className="rounded-lg bg-secondary/50 p-3">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground">Your location</p>
+                      {isLoadingAddress ? (
+                        <p className="text-sm text-foreground flex items-center gap-2">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Detecting...
+                        </p>
+                      ) : currentAddress ? (
+                        <p className="text-sm text-foreground truncate">{currentAddress}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Location unavailable</p>
+                      )}
+                      {isOnCampus && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Shield className="h-3 w-3 text-primary" />
+                          <span className="text-xs text-primary font-medium">On VT Campus</span>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                </div>
+
+                {/* Primary Call Button - Location aware */}
+                <Button
+                  className="w-full h-12 sm:h-14 text-base sm:text-lg bg-destructive hover:bg-destructive/90"
+                  onClick={() => handleCall(primaryContact.number, primaryContact.label)}
+                >
+                  <Phone className="h-5 w-5 mr-3" />
+                  {primaryContact.label}: {primaryContact.number}
+                </Button>
+                <p className="text-xs text-center text-muted-foreground -mt-1 sm:-mt-2">
+                  {primaryContact.description}
+                </p>
+
+                <div className="border-t border-border pt-3 sm:pt-4">
+                  {/* Generate Voice Message */}
+                  <Button
+                    variant="secondary"
+                    className="w-full h-10 sm:h-12"
+                    onClick={generateEmergencyVoice}
+                    disabled={isGeneratingVoice || isPlaying}
+                  >
+                    {isGeneratingVoice ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating voice message...
+                      </>
+                    ) : isPlaying ? (
+                      <>
+                        <Volume2 className="h-4 w-4 mr-2 animate-pulse" />
+                        Playing emergency message...
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="h-4 w-4 mr-2" />
+                        Play Emergency Voice Alert
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Stop Audio */}
+                  <AnimatePresence>
+                    {isPlaying && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-2"
+                      >
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={stopAudio}
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Stop Audio
+                        </Button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <p className="text-xs text-muted-foreground text-center pt-3">
+                    Voice alert includes your current location for first responders.
+                  </p>
                 </div>
               </div>
-            </div>
-
-            {/* Primary Call Button - Location aware */}
-            <Button
-              className="w-full h-14 text-lg bg-destructive hover:bg-destructive/90"
-              onClick={() => handleCall(primaryContact.number, primaryContact.label)}
-            >
-              <Phone className="h-5 w-5 mr-3" />
-              {primaryContact.label}: {primaryContact.number}
-            </Button>
-            <p className="text-xs text-center text-muted-foreground -mt-2">
-              {primaryContact.description}
-            </p>
-
-
-            <div className="border-t border-border pt-4">
-              {/* Generate Voice Message */}
-              <Button
-                variant="secondary"
-                className="w-full h-12"
-                onClick={generateEmergencyVoice}
-                disabled={isGeneratingVoice || isPlaying}
-              >
-                {isGeneratingVoice ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating voice message...
-                  </>
-                ) : isPlaying ? (
-                  <>
-                    <Volume2 className="h-4 w-4 mr-2 animate-pulse" />
-                    Playing emergency message...
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="h-4 w-4 mr-2" />
-                    Play Emergency Voice Alert
-                  </>
-                )}
-              </Button>
-
-              {/* Stop Audio */}
-              <AnimatePresence>
-                {isPlaying && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-2"
-                  >
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={stopAudio}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Stop Audio
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <p className="text-xs text-muted-foreground text-center pt-3">
-                Voice alert includes your current location for first responders.
-              </p>
             </div>
           </div>
         </DialogContent>
