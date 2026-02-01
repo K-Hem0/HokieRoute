@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import { PlaceResult } from "@/hooks/usePlaceSearch";
 import { formatDistance, formatDuration } from "@/hooks/useRouting";
+import { RouteReassurance } from "@/components/RouteReassurance";
 import { cn } from "@/lib/utils";
 
 interface PointToPointSheetProps {
@@ -306,6 +307,12 @@ export const PointToPointSheet = ({
                     <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">Walking</p>
                   </div>
                 </div>
+                
+                {/* Route explanation */}
+                <RouteReassurance 
+                  className="border-t border-border/50 pt-1" 
+                  destinationName={destination.name}
+                />
               </div>
             </motion.div>
           )}
