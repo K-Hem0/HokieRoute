@@ -532,7 +532,7 @@ const Map = () => {
         )}
       </AnimatePresence>
 
-      {/* FAB Buttons Container - Layer 4 (z-20) - Bottom Left, above safe area */}
+      {/* FAB Buttons Container - Layer 4 (z-20) - Bottom Left, stacked vertically */}
       <AnimatePresence>
         {config.showFABs && (
           <motion.div
@@ -540,16 +540,15 @@ const Map = () => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute left-3 sm:left-4 z-20 flex flex-row gap-2 sm:gap-3 bottom-[calc(env(safe-area-inset-bottom)+24px)]"
+            className="absolute left-3 sm:left-4 z-20 flex flex-col items-center gap-2 sm:gap-3 bottom-[calc(env(safe-area-inset-bottom)+24px)]"
           >
-            {/* SOS Emergency Button */}
-            {/* Pass real GPS fix and pre-fetched OSRM address from useCurrentLocation */}
+            {/* SOS Emergency Button - on top */}
             <SOSButton userLocation={userLocation} userAddress={userAddress} addressLoading={addressLoading} />
 
-            {/* Report FAB */}
+            {/* Report FAB - below SOS */}
             <Button
               size="icon"
-              className="control-btn rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="h-11 w-11 sm:h-12 sm:w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => setShowReport(true)}
             >
               <Flag className="h-4 w-4 sm:h-5 sm:w-5" />
