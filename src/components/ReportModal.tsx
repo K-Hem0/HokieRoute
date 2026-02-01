@@ -53,14 +53,14 @@ export const ReportModal = ({ isOpen, onClose }: ReportModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="sm:max-w-md bg-card border-border max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Report an Issue</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 py-2">
           {/* Pin Drop Section (Mocked) */}
-          <div className="relative aspect-[16/9] rounded-xl border border-border bg-background overflow-hidden">
+          <div className="relative aspect-[16/7] rounded-xl border border-border bg-background overflow-hidden">
             {/* Mock map grid */}
             <div className="absolute inset-0 opacity-30">
               <svg className="w-full h-full" viewBox="0 0 100 60">
@@ -106,7 +106,7 @@ export const ReportModal = ({ isOpen, onClose }: ReportModalProps) => {
           </div>
 
           {/* Category Selection */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               What's the issue?
             </label>
@@ -116,13 +116,13 @@ export const ReportModal = ({ isOpen, onClose }: ReportModalProps) => {
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
                   className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all",
+                    "flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all",
                     selectedCategory === category.id
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border bg-card hover:border-primary/50 text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <category.icon className="h-6 w-6" />
+                  <category.icon className="h-5 w-5" />
                   <span className="text-sm font-medium">{category.label}</span>
                 </button>
               ))}
@@ -138,13 +138,13 @@ export const ReportModal = ({ isOpen, onClose }: ReportModalProps) => {
               placeholder="Describe the issue..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="resize-none bg-background border-border"
-              rows={3}
+              className="resize-none bg-background border-border text-sm"
+              rows={2}
             />
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-1">
             <Button
               variant="outline"
               onClick={handleClose}
