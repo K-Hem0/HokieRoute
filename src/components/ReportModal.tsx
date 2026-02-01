@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Lightbulb, HardHat, AlertTriangle, MoreHorizontal, MapPin } from "lucide-react";
+import { Lightbulb, HardHat, AlertTriangle, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -59,51 +59,6 @@ export const ReportModal = ({ isOpen, onClose }: ReportModalProps) => {
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Pin Drop Section (Mocked) */}
-          <div className="relative aspect-[16/7] rounded-xl border border-border bg-background overflow-hidden">
-            {/* Mock map grid */}
-            <div className="absolute inset-0 opacity-30">
-              <svg className="w-full h-full" viewBox="0 0 100 60">
-                {[...Array(10)].map((_, i) => (
-                  <g key={i}>
-                    <line
-                      x1={i * 10}
-                      y1="0"
-                      x2={i * 10}
-                      y2="60"
-                      stroke="currentColor"
-                      strokeWidth="0.3"
-                      className="text-muted-foreground"
-                    />
-                    <line
-                      x1="0"
-                      y1={i * 6}
-                      x2="100"
-                      y2={i * 6}
-                      stroke="currentColor"
-                      strokeWidth="0.3"
-                      className="text-muted-foreground"
-                    />
-                  </g>
-                ))}
-              </svg>
-            </div>
-            
-            {/* Center pin */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative">
-                <MapPin className="h-8 w-8 text-caution fill-caution/20" />
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-1 bg-caution/30 rounded-full blur-sm" />
-              </div>
-            </div>
-            
-            {/* Instruction */}
-            <div className="absolute bottom-2 inset-x-0 text-center">
-              <span className="text-xs text-muted-foreground bg-card/80 px-2 py-1 rounded">
-                Tap to adjust pin location
-              </span>
-            </div>
-          </div>
 
           {/* Category Selection */}
           <div className="space-y-2">
