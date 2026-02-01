@@ -44,94 +44,97 @@ export const useRoutes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchRoutes = async () => {
-      try {
-        // Fetch both routes and safety scores in parallel
-        const [routesResult, safetyScores] = await Promise.all([
-          supabase
-            .from("routes")
-            .select("*")
-            .order("created_at", { ascending: false }),
-          fetchLocationSafetyScores(),
-        ]);
+  const fetchRoutes = async () => {
+    setLoading(true);
+    try {
+      // Fetch both routes and safety scores in parallel
+      const [routesResult, safetyScores] = await Promise.all([
+        supabase
+          .from("routes")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        fetchLocationSafetyScores(),
+      ]);
 
-        if (routesResult.error) throw routesResult.error;
+      if (routesResult.error) throw routesResult.error;
 
-        // If database has routes, use them with calculated safety
-        if (routesResult.data && routesResult.data.length > 0) {
-          const transformedRoutes: Route[] = routesResult.data.map((route) => {
-            // Calculate safety from location data if available
-            const calculatedSafety = calculateRouteSafety(
-              route.name,
-              route.description || "",
-              "", // Start location name - could be enhanced later
-              "", // End location name - could be enhanced later
-              safetyScores
-            );
+      // If database has routes, use them with calculated safety
+      if (routesResult.data && routesResult.data.length > 0) {
+        const transformedRoutes: Route[] = routesResult.data.map((route) => {
+          // Calculate safety from location data if available
+          const calculatedSafety = calculateRouteSafety(
+            route.name,
+            route.description || "",
+            "", // Start location name - could be enhanced later
+            "", // End location name - could be enhanced later
+            safetyScores
+          );
 
-            // Use calculated safety if we have matching data, otherwise use stored value
-            const safetyScore =
-              calculatedSafety.matchedCount > 0
-                ? calculatedSafety.safetyLevel
-                : (route.safety_score as SafetyLevel);
+          // Use calculated safety if we have matching data, otherwise use stored value
+          const safetyScore =
+            calculatedSafety.matchedCount > 0
+              ? calculatedSafety.safetyLevel
+              : (route.safety_score as SafetyLevel);
 
-            const safetyInsight =
-              calculatedSafety.matchedCount > 0
-                ? calculatedSafety.insight
-                : route.safety_insight || "";
+          const safetyInsight =
+            calculatedSafety.matchedCount > 0
+              ? calculatedSafety.insight
+              : route.safety_insight || "";
 
+          return {
+            id: route.id,
+            name: route.name,
+            description: route.description || "",
+            distance_km: Number(route.distance_km),
+            duration_walk_min: route.duration_walk_min,
+            duration_cycle_min: route.duration_cycle_min,
+            safety_score: safetyScore,
+            safety_insight: safetyInsight,
+            coordinates: route.coordinates as [number, number][],
+            start_point: route.start_point as [number, number],
+            end_point: route.end_point as [number, number],
+            thumbnail_url: route.thumbnail_url || undefined,
+            badges: getDefaultBadges(safetyScore),
+          };
+        });
+        setRoutes(transformedRoutes);
+      } else {
+        // Use mock data with calculated safety
+        const enhancedMockRoutes = mockRoutes.map((route) => {
+          const calculatedSafety = calculateRouteSafety(
+            route.name,
+            route.description,
+            "",
+            "",
+            safetyScores
+          );
+
+          if (calculatedSafety.matchedCount > 0) {
             return {
-              id: route.id,
-              name: route.name,
-              description: route.description || "",
-              distance_km: Number(route.distance_km),
-              duration_walk_min: route.duration_walk_min,
-              duration_cycle_min: route.duration_cycle_min,
-              safety_score: safetyScore,
-              safety_insight: safetyInsight,
-              coordinates: route.coordinates as [number, number][],
-              start_point: route.start_point as [number, number],
-              end_point: route.end_point as [number, number],
-              thumbnail_url: route.thumbnail_url || undefined,
-              badges: getDefaultBadges(safetyScore),
+              ...route,
+              safety_score: calculatedSafety.safetyLevel,
+              safety_insight: calculatedSafety.insight,
+              badges: getDefaultBadges(calculatedSafety.safetyLevel),
             };
-          });
-          setRoutes(transformedRoutes);
-        } else {
-          // Use mock data with calculated safety
-          const enhancedMockRoutes = mockRoutes.map((route) => {
-            const calculatedSafety = calculateRouteSafety(
-              route.name,
-              route.description,
-              "",
-              "",
-              safetyScores
-            );
-
-            if (calculatedSafety.matchedCount > 0) {
-              return {
-                ...route,
-                safety_score: calculatedSafety.safetyLevel,
-                safety_insight: calculatedSafety.insight,
-                badges: getDefaultBadges(calculatedSafety.safetyLevel),
-              };
-            }
-            return route;
-          });
-          setRoutes(enhancedMockRoutes);
-        }
-      } catch (err: any) {
-        // Fallback to mock data on error
-        console.warn("Using mock data:", err.message);
-        setRoutes(mockRoutes);
-      } finally {
-        setLoading(false);
+          }
+          return route;
+        });
+        setRoutes(enhancedMockRoutes);
       }
-    };
+    } catch (err: any) {
+      // Fallback to mock data on error
+      console.warn("Using mock data:", err.message);
+      setRoutes(mockRoutes);
+      setError(err?.message ?? "Failed to load routes");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchRoutes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { routes, loading, error };
+  return { routes, loading, error, refetch: fetchRoutes };
 };

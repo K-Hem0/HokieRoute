@@ -62,15 +62,16 @@ const Map = () => {
   const [showReassurance, setShowReassurance] = useState(false);
   const [reassuranceDestination, setReassuranceDestination] = useState<string | undefined>(undefined);
   const [pointToPointMinimized, setPointToPointMinimized] = useState(false);
+  const [savingPointToPoint, setSavingPointToPoint] = useState(false);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
   const [locationPermissionHandled, setLocationPermissionHandled] = useState(false);
 
   // Map state management
   const { state: mapState, config, setExplore, setPlanning, setNavigation } = useMapState("explore");
 
-  const { routes, loading: routesLoading } = useRoutes();
+  const { routes, loading: routesLoading, refetch: refetchRoutes } = useRoutes();
   const { user, signOut } = useAuth();
-  const { savedRouteIds, toggleSaveRoute, unsaveRoute, isRouteSaved } = useSavedRoutes();
+  const { savedRouteIds, toggleSaveRoute, unsaveRoute, isRouteSaved, saveCustomRoute } = useSavedRoutes();
   const { isDark, toggleTheme } = useTheme();
   const { coordinates: userLocation, effectiveCoordinates: effectiveLocation, accuracy, isAccurate, requestLocation: recenter, startWatching, stopWatching, permissionDenied, dismissPermissionDenied, displayAddress: userAddress, loadingAddress: addressLoading } = useCurrentLocation();
   const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = usePlaceSearch();
@@ -225,6 +226,28 @@ const Map = () => {
     clearRoute();
     setExplore();
   };
+
+  const handleSavePointToPointRoute = useCallback(
+    async (origin: PlaceResult, destination: PlaceResult, route: any) => {
+      if (!user) {
+        setShowAuth(true);
+        return false;
+      }
+
+      setSavingPointToPoint(true);
+      try {
+        const ok = await saveCustomRoute({ origin, destination, route });
+        if (ok) {
+          // Make sure it shows in the Favorites sheet immediately
+          await refetchRoutes();
+        }
+        return ok;
+      } finally {
+        setSavingPointToPoint(false);
+      }
+    },
+    [user, saveCustomRoute, refetchRoutes]
+  );
 
   const handleSaveRoute = async () => {
     if (!selectedRoute) return;
@@ -649,6 +672,10 @@ const Map = () => {
             routeLoading={routeLoading}
             calculateRoute={calculateRoute}
             onShowReassurance={handleOpenReassurance}
+            onSaveRoute={handleSavePointToPointRoute}
+            isSaving={savingPointToPoint}
+            isLoggedIn={!!user}
+            onLoginRequest={() => setShowAuth(true)}
           />
         )}
       </AnimatePresence>
