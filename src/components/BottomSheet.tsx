@@ -61,13 +61,13 @@ const BottomSheet = ({
 
             {/* Header */}
             {title && (
-              <div className="border-b border-border px-6 pb-4">
+              <div className="border-b border-border px-5 sm:px-6 pb-4">
                 <h2 className="text-lg font-semibold text-foreground">{title}</h2>
               </div>
             )}
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 pb-safe-bottom">
+            <div className="flex-1 overflow-y-auto px-5 sm:px-6 pb-[max(env(safe-area-inset-bottom,0px)+16px,20px)]">
               {children}
             </div>
           </motion.div>

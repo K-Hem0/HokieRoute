@@ -434,6 +434,66 @@
   }
 
   /* ========================================
+     MODAL & SHEET SPACING SYSTEM
+     ======================================== */
+
+  /* Consistent modal content padding */
+  .modal-content-padding {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  @media (max-width: 390px) {
+    .modal-content-padding {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+  }
+
+  /* Modal grid layouts - ensure items don't touch edges */
+  .modal-grid {
+    display: grid;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+
+  .modal-grid-2col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 340px) {
+    .modal-grid-2col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Modal action row */
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 8px;
+  }
+
+  .modal-actions > * {
+    flex: 1;
+    min-height: 44px;
+  }
+
+  /* Bottom sheet content insets */
+  .sheet-content-inset {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px) + 16px, 20px);
+  }
+
+  @media (max-width: 390px) {
+    .sheet-content-inset {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+  }
+
+  /* ========================================
      LEAFLET POPUP STYLING
      ======================================== */
 
