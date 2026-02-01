@@ -20,7 +20,7 @@ import { useRoutes } from "@/hooks/useRoutes";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
 import { useTheme } from "@/hooks/useTheme";
-import { useGeolocation } from "@/hooks/useGeolocation";
+import { useCurrentLocation } from "@/hooks/useCurrentLocation";
 import { usePlaceSearch, PlaceResult } from "@/hooks/usePlaceSearch";
 import { useRouting, formatDistance, formatDuration } from "@/hooks/useRouting";
 import { useMapState } from "@/hooks/useMapState";
@@ -70,7 +70,7 @@ const Map = () => {
   const { user, signOut } = useAuth();
   const { savedRouteIds, toggleSaveRoute, unsaveRoute, isRouteSaved } = useSavedRoutes();
   const { isDark, toggleTheme } = useTheme();
-  const { location: userLocation, effectiveLocation, accuracy, isAccurate, recenter, startWatching, stopWatching, permissionDenied, dismissPermissionDenied } = useGeolocation();
+  const { coordinates: userLocation, effectiveCoordinates: effectiveLocation, accuracy, isAccurate, requestLocation: recenter, startWatching, stopWatching, permissionDenied, dismissPermissionDenied, displayAddress: userAddress, loadingAddress: addressLoading } = useCurrentLocation();
   const { results: placeResults, loading: placesLoading, searchPlaces, clearResults } = usePlaceSearch();
   const { route: calculatedRoute, loading: routeLoading, calculateRoute, clearRoute } = useRouting();
 
@@ -293,6 +293,8 @@ const Map = () => {
         heatmapEnabled={heatmapEnabled}
         onHeatmapToggle={setHeatmapEnabled}
         recenterTrigger={recenterTrigger}
+        userAddress={userAddress}
+        addressLoading={addressLoading}
         onMapClick={() => {
           if (mapState === "explore") {
             setSelectedRoute(null);
@@ -541,8 +543,8 @@ const Map = () => {
             className="absolute left-3 sm:left-4 z-20 flex flex-row gap-2 sm:gap-3 bottom-[calc(env(safe-area-inset-bottom)+24px)]"
           >
             {/* SOS Emergency Button */}
-            {/* IMPORTANT: pass real GPS fix only (null if not granted) to avoid fallback address */}
-            <SOSButton userLocation={userLocation} />
+            {/* Pass real GPS fix and pre-fetched OSRM address from useCurrentLocation */}
+            <SOSButton userLocation={userLocation} userAddress={userAddress} addressLoading={addressLoading} />
 
             {/* Report FAB */}
             <Button
