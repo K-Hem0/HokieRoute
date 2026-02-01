@@ -262,10 +262,6 @@ const Map = () => {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
-      {/* VT WYA Branding */}
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-        <span className="text-lg font-bold text-foreground drop-shadow-md">HokieRoute</span>
-      </div>
 
       {/* Map */}
       <MapView
@@ -382,9 +378,7 @@ const Map = () => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  <p>
-                    {accuracy ? `Recenter (±${Math.round(accuracy)}m)` : 'Recenter map'}
-                  </p>
+                  <p>Recenter map</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
