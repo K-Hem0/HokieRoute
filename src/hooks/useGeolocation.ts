@@ -8,6 +8,7 @@ interface GeolocationState {
   loading: boolean;
   error: string | null;
   isWatching: boolean;
+  permissionDenied: boolean;
 }
 
 export const useGeolocation = () => {
@@ -17,9 +18,15 @@ export const useGeolocation = () => {
     loading: false,
     error: null,
     isWatching: false,
+    permissionDenied: false,
   });
   
   const watchIdRef = useRef<number | null>(null);
+
+  // Dismiss the permission denied state (user acknowledged the popup)
+  const dismissPermissionDenied = useCallback(() => {
+    setState((prev) => ({ ...prev, permissionDenied: false }));
+  }, []);
 
   // Request current position once
   const requestLocation = useCallback(() => {
@@ -43,14 +50,17 @@ export const useGeolocation = () => {
           accuracy: position.coords.accuracy,
           loading: false,
           error: null,
+          permissionDenied: false,
         }));
       },
       (error) => {
+        const isDenied = error.code === error.PERMISSION_DENIED;
         setState((prev) => ({
           ...prev,
           location: prev.location || BLACKSBURG_CENTER,
           loading: false,
           error: error.message,
+          permissionDenied: isDenied,
         }));
       },
       {
@@ -86,13 +96,16 @@ export const useGeolocation = () => {
           accuracy: position.coords.accuracy,
           loading: false,
           error: null,
+          permissionDenied: false,
         }));
       },
       (error) => {
+        const isDenied = error.code === error.PERMISSION_DENIED;
         setState((prev) => ({
           ...prev,
           loading: false,
           error: error.message,
+          permissionDenied: isDenied,
         }));
       },
       {
@@ -130,6 +143,7 @@ export const useGeolocation = () => {
     requestLocation,
     startWatching,
     stopWatching,
+    dismissPermissionDenied,
     // For demo purposes, if no location, use Blacksburg center
     effectiveLocation: state.location || BLACKSBURG_CENTER,
   };
