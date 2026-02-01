@@ -520,7 +520,7 @@ const Map = () => {
             {/* Report FAB */}
             <Button
               size="icon"
-              className="h-12 w-12 rounded-full shadow-lg bg-caution hover:bg-caution/90 text-caution-foreground"
+              className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => setShowReport(true)}
             >
               <Flag className="h-5 w-5" />
@@ -540,12 +540,10 @@ const Map = () => {
             className="absolute bottom-28 left-1/2 -translate-x-1/2 z-10"
           >
             <Button
-              variant="secondary"
-              size="sm"
-              className="rounded-full shadow-lg px-4 h-9 text-xs font-medium bg-card/95 backdrop-blur-md border border-border hover:bg-secondary"
+              className="h-12 px-5 rounded-2xl shadow-lg text-sm font-medium"
               onClick={handleClearPointToPoint}
             >
-              <X className="h-3.5 w-3.5 mr-1.5" />
+              <X className="h-4 w-4 mr-2" />
               Clear route
             </Button>
           </motion.div>
