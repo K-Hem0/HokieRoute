@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl } from "react-leaflet";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { MapContainer, TileLayer, Polyline, Marker, useMap, ZoomControl, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Route } from "@/lib/mock-data";
 import { SafetyHeatmapLayer } from "./map/SafetyHeatmapLayer";
 import { useHeatmapData } from "@/hooks/useHeatmapData";
-
+import { Loader2, MapPin } from "lucide-react";
 // Blacksburg, VA center
 const BLACKSBURG_CENTER: [number, number] = [37.2296, -80.4139]; // [lat, lng] for Leaflet
 
@@ -119,6 +119,99 @@ const createUserIcon = () => {
     iconSize: [24, 24],
     iconAnchor: [12, 12],
   });
+};
+
+// Reverse geocode to get address from coordinates
+const reverseGeocodeLocation = async (lng: number, lat: number): Promise<string> => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&namedetails=1&extratags=1&zoom=18`,
+      { headers: { "Accept-Language": "en" } }
+    );
+    
+    if (!response.ok) throw new Error("Geocoding failed");
+    
+    const data = await response.json();
+    const addr = data.address;
+
+    // Prefer named place/building
+    const placeName: string | undefined =
+      (typeof data.name === "string" && data.name.trim() ? data.name.trim() : undefined) ||
+      (data.namedetails?.name?.trim() || undefined) ||
+      (addr?.building?.trim() || undefined) ||
+      (addr?.amenity?.trim() || undefined);
+
+    const parts: string[] = [];
+    if (addr?.house_number && addr?.road) {
+      parts.push(`${addr.house_number} ${addr.road}`);
+    } else if (addr?.road) {
+      parts.push(addr.road);
+    }
+
+    if (addr?.city || addr?.town || addr?.village) {
+      parts.push(addr.city || addr.town || addr.village);
+    }
+
+    if (placeName) {
+      const context = parts.length > 0 ? ` (${parts.join(", ")})` : "";
+      return `${placeName}${context}`;
+    }
+
+    return parts.length > 0 ? parts.join(", ") : data.display_name?.split(",").slice(0, 2).join(",") || "Unknown location";
+  } catch {
+    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  }
+};
+
+// User location marker with popup showing address
+const UserLocationMarker = ({ position, userLocation }: { position: [number, number]; userLocation: [number, number] }) => {
+  const [address, setAddress] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const markerRef = useRef<L.Marker>(null);
+
+  const handleClick = useCallback(async () => {
+    if (address) return; // Already fetched
+    
+    setLoading(true);
+    const [lng, lat] = userLocation; // userLocation is [lng, lat]
+    const result = await reverseGeocodeLocation(lng, lat);
+    setAddress(result);
+    setLoading(false);
+  }, [address, userLocation]);
+
+  // Open popup when marker is clicked
+  useEffect(() => {
+    const marker = markerRef.current;
+    if (marker) {
+      marker.on("click", handleClick);
+      return () => {
+        marker.off("click", handleClick);
+      };
+    }
+  }, [handleClick]);
+
+  return (
+    <Marker ref={markerRef} position={position} icon={createUserIcon()} eventHandlers={{ click: handleClick }}>
+      <Popup className="user-location-popup" closeButton={true} autoPan={true}>
+        <div className="flex items-start gap-2 min-w-[180px] max-w-[250px]">
+          <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs font-medium text-muted-foreground mb-0.5">Your location</p>
+            {loading ? (
+              <div className="flex items-center gap-1.5 text-sm text-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Detecting...</span>
+              </div>
+            ) : address ? (
+              <p className="text-sm font-medium text-foreground leading-tight">{address}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">Tap to see address</p>
+            )}
+          </div>
+        </div>
+      </Popup>
+    </Marker>
+  );
 };
 
 // Custom destination icon - VT Turkey Foot in orange/maroon
@@ -331,8 +424,10 @@ const MapView = ({
           recenterTrigger={recenterTrigger}
         />
 
-        {/* User location marker */}
-        {userLatLng && <Marker position={userLatLng} icon={createUserIcon()} />}
+        {/* User location marker with address popup */}
+        {userLatLng && userLocation && (
+          <UserLocationMarker position={userLatLng} userLocation={userLocation} />
+        )}
 
         {/* Origin marker for point-to-point routes */}
         {originLatLng && <Marker position={originLatLng} icon={createOriginIcon()} />}
