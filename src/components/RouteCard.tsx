@@ -89,8 +89,8 @@ const RouteCard = ({ route, mode, onClick, variant = "compact" }: RouteCardProps
       <button
         onClick={onClick}
         className={cn(
-          "group w-full rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/50 hover:bg-card/80",
-          variant === "full" && "p-5"
+          "group w-full rounded-xl border border-border bg-card p-3 sm:p-4 text-left transition-all hover:border-primary/50 hover:bg-card/80 active:scale-[0.98]",
+          variant === "full" && "p-4 sm:p-5"
         )}
       >
         <div className="flex items-start justify-between gap-3">

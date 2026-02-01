@@ -53,7 +53,7 @@ export const ReportModal = ({ isOpen, onClose }: ReportModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-card border-border max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md mx-4 bg-card border-border max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Report an Issue</DialogTitle>
         </DialogHeader>
@@ -65,20 +65,20 @@ export const ReportModal = ({ isOpen, onClose }: ReportModalProps) => {
             <label className="text-sm font-medium text-foreground">
               What's the issue?
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {categories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all",
+                    "flex flex-col items-center gap-1 sm:gap-1.5 p-3 sm:p-3 rounded-xl border transition-all touch-target active:scale-95",
                     selectedCategory === category.id
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border bg-card hover:border-primary/50 text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <category.icon className="h-5 w-5" />
-                  <span className="text-sm font-medium">{category.label}</span>
+                  <span className="text-xs sm:text-sm font-medium text-center">{category.label}</span>
                 </button>
               ))}
             </div>

@@ -33,12 +33,12 @@ const Landing = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
       
       {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 pt-safe">
         <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
       </div>
       
       {/* Hero Section */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-6 pt-16 pb-8">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-4 sm:px-6 pt-14 sm:pt-16 pb-6 sm:pb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -53,11 +53,11 @@ const Landing = () => {
           >
             Built for Hokies
           </motion.p>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight mb-4">
+          <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight mb-3 sm:mb-4">
             Walk safer.{" "}
             <span className="text-primary">Stay aware.</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-lg mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto px-2">
             AI-powered route planning with real-time safety insights around Virginia Tech and downtown.
           </p>
           
@@ -69,10 +69,10 @@ const Landing = () => {
             <Button
               size="lg"
               onClick={() => navigate("/map")}
-              className="group px-8 py-6 text-lg font-semibold rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-105"
+              className="group px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-105 active:scale-95"
             >
               Start HokieRoute
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
             </Button>
           </motion.div>
         </motion.div>
@@ -177,13 +177,13 @@ const Landing = () => {
       </div>
 
       {/* Features Section */}
-      <div className="relative z-10 px-6 py-16">
+      <div className="relative z-10 px-4 sm:px-6 py-12 sm:py-16">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6"
           >
             {features.map((feature, index) => (
               <motion.div
@@ -191,15 +191,15 @@ const Landing = () => {
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ delay: 0.8 + index * 0.1, duration: 0.4 }}
-                className="group p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
+                className="group p-5 sm:p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all active:scale-[0.98]"
               >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                  <feature.icon className="h-6 w-6 text-primary" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-primary/20 transition-colors">
+                  <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
+                <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1.5 sm:mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
               </motion.div>
@@ -209,8 +209,8 @@ const Landing = () => {
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-8 border-t border-border">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="relative z-10 px-4 sm:px-6 py-6 sm:py-8 border-t border-border pb-safe-bottom">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <span className="text-sm font-semibold text-foreground">HokieRoute</span>
           <span className="text-xs text-muted-foreground">Made for Hokies <span className="font-semibold text-primary">BY</span> Hokies</span>
         </div>

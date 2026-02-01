@@ -147,16 +147,16 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
       >
         <Button
           size="icon"
-          className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+          className="h-11 w-11 sm:h-12 sm:w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 active:scale-95 text-primary-foreground transition-transform"
           onClick={handleSOSPress}
         >
-          <Phone className="h-5 w-5" />
+          <Phone className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
       </motion.div>
 
       {/* SOS Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md mx-4 max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center text-destructive text-xl">
               🆘 Emergency SOS
