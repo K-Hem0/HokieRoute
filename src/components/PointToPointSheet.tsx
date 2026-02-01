@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Navigation, Loader2, X, ArrowDownUp } from "lucide-react";
+import { MapPin, Navigation, Loader2, X, ArrowDownUp, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import { PlaceResult } from "@/hooks/usePlaceSearch";
 import { formatDistance, formatDuration } from "@/hooks/useRouting";
-import { RouteReassurance } from "@/components/RouteReassurance";
 import { cn } from "@/lib/utils";
 
 interface PointToPointSheetProps {
@@ -19,6 +18,7 @@ interface PointToPointSheetProps {
   } | null;
   routeLoading: boolean;
   calculateRoute: (origin: [number, number], destination: [number, number]) => Promise<any>;
+  onShowReassurance?: (destinationName: string) => void;
 }
 
 type ActiveField = "origin" | "destination" | null;
@@ -30,6 +30,7 @@ export const PointToPointSheet = ({
   calculatedRoute,
   routeLoading,
   calculateRoute,
+  onShowReassurance,
 }: PointToPointSheetProps) => {
   const [origin, setOrigin] = useState<PlaceResult | null>(null);
   const [destination, setDestination] = useState<PlaceResult | null>(null);
@@ -308,11 +309,16 @@ export const PointToPointSheet = ({
                   </div>
                 </div>
                 
-                {/* Route explanation */}
-                <RouteReassurance 
-                  className="border-t border-border/50 pt-1" 
-                  destinationName={destination.name}
-                />
+                {/* Why this route button */}
+                {onShowReassurance && (
+                  <button
+                    onClick={() => onShowReassurance(destination.name)}
+                    className="w-full flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground/70 hover:text-foreground transition-colors border-t border-border/50"
+                  >
+                    <Shield className="h-3 w-3" />
+                    <span className="tracking-tight">Why this route?</span>
+                  </button>
+                )}
               </div>
             </motion.div>
           )}
