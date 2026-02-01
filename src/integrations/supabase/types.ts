@@ -77,6 +77,7 @@ export type Database = {
           safety_score: string
           start_point: Json
           thumbnail_url: string | null
+          user_id: string | null
         }
         Insert: {
           coordinates: Json
@@ -92,6 +93,7 @@ export type Database = {
           safety_score: string
           start_point: Json
           thumbnail_url?: string | null
+          user_id?: string | null
         }
         Update: {
           coordinates?: Json
@@ -107,6 +109,7 @@ export type Database = {
           safety_score?: string
           start_point?: Json
           thumbnail_url?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
