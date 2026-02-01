@@ -236,11 +236,11 @@ export const RouteReassuranceSidebar = ({ isOpen, onClose, destinationName }: Ro
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ y: -20, opacity: 0 }}
+          initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -20, opacity: 0 }}
+          exit={{ y: -10, opacity: 0 }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed top-36 left-1/2 -translate-x-1/2 z-40 w-72 max-w-[90vw] bg-card/95 border border-border rounded-xl shadow-lg"
+          className="absolute top-28 left-4 right-4 z-40 mx-auto max-w-md bg-card/95 border border-border rounded-xl shadow-lg"
         >
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-border">
