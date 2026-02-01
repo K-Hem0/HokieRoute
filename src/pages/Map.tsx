@@ -311,8 +311,8 @@ const Map = () => {
         )}
       </AnimatePresence>
 
-      {/* State indicator pill */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40">
+      {/* State indicator pill - below search bar */}
+      <div className="absolute top-28 left-1/2 -translate-x-1/2 z-40">
         <AnimatePresence mode="wait">
           <MapStateIndicator key={mapState} state={mapState} />
         </AnimatePresence>
@@ -326,7 +326,7 @@ const Map = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="absolute inset-x-0 top-12 z-50 p-4 pt-safe"
+            className="absolute inset-x-0 top-4 z-50 p-4 pt-safe"
           >
             <PlaceSearchInput
               value={searchQuery}
@@ -350,7 +350,7 @@ const Map = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -20, opacity: 0 }}
             transition={{ duration: 0.25, delay: 0.1 }}
-            className="absolute left-4 top-32 z-40 flex flex-col gap-2"
+            className="absolute left-4 top-24 z-40 flex flex-col gap-2"
           >
             <ThemeToggle isDark={isDark} onToggle={toggleTheme} className="shadow-lg" />
             
@@ -420,7 +420,7 @@ const Map = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 20, opacity: 0 }}
             transition={{ duration: 0.25, delay: 0.1 }}
-            className="absolute right-4 top-32 z-40 flex flex-col gap-2"
+            className="absolute right-4 top-24 z-40 flex flex-col gap-2"
           >
             {/* Account button */}
             <Button
