@@ -28,7 +28,7 @@ export const useGeolocation = () => {
     setState((prev) => ({ ...prev, permissionDenied: false }));
   }, []);
 
-  // Request current position once
+  // Request current position once (with loading state)
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setState((prev) => ({
@@ -70,6 +70,42 @@ export const useGeolocation = () => {
       }
     );
   }, []);
+
+  // Quick recenter - uses cached location if available, no loading state
+  const recenter = useCallback(() => {
+    // If we already have a location, just return true (caller will pan map)
+    if (state.location) {
+      return true;
+    }
+    
+    // No location yet - request one but don't show loading (background fetch)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setState((prev) => ({
+            ...prev,
+            location: [position.coords.longitude, position.coords.latitude],
+            accuracy: position.coords.accuracy,
+            error: null,
+            permissionDenied: false,
+          }));
+        },
+        () => {
+          // Silent fail - use default location
+          setState((prev) => ({
+            ...prev,
+            location: prev.location || BLACKSBURG_CENTER,
+          }));
+        },
+        {
+          enableHighAccuracy: false, // Fast, less accurate
+          timeout: 5000,
+          maximumAge: 60000, // Accept cached positions up to 1 minute old
+        }
+      );
+    }
+    return false;
+  }, [state.location]);
 
   // Start watching position continuously
   const startWatching = useCallback(() => {
@@ -141,6 +177,7 @@ export const useGeolocation = () => {
     ...state,
     isAccurate,
     requestLocation,
+    recenter,
     startWatching,
     stopWatching,
     dismissPermissionDenied,
