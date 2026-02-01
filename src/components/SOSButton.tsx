@@ -6,10 +6,10 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Emergency numbers - location aware
+// NOTE: VT Police number per product requirement
 const EMERGENCY_NUMBERS = {
-  VT_POLICE: { number: "540-231-6411", label: "VT Police", description: "Virginia Tech Campus Police" },
+  VT_POLICE: { number: "540-739-9854", label: "VT Police", description: "Virginia Tech Campus Police" },
   BLACKSBURG_POLICE: { number: "540-961-1150", label: "Blacksburg Police", description: "Town of Blacksburg Police" },
-  EMERGENCY_911: { number: "911", label: "911", description: "Emergency Services" },
 };
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -35,6 +35,12 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
   const [currentAddress, setCurrentAddress] = useState<string | null>(null);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [isOnCampus, setIsOnCampus] = useState(false);
+  const [lastFix, setLastFix] = useState<{
+    lng: number;
+    lat: number;
+    accuracy: number | null;
+    timestamp: number;
+  } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Check if user is on VT campus
@@ -86,6 +92,7 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     if (isOpen) {
       setIsLoadingAddress(true);
       setCurrentAddress(null);
+      setLastFix(null);
       
       // Always request fresh location when SOS dialog opens (emergency situation)
       if (navigator.geolocation) {
@@ -93,6 +100,12 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
           async (position) => {
             const lng = position.coords.longitude;
             const lat = position.coords.latitude;
+            setLastFix({
+              lng,
+              lat,
+              accuracy: Number.isFinite(position.coords.accuracy) ? position.coords.accuracy : null,
+              timestamp: position.timestamp,
+            });
             setIsOnCampus(checkIfOnCampus(lng, lat));
             const address = await reverseGeocode(lng, lat);
             setCurrentAddress(address);
@@ -102,6 +115,7 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
             // Fall back to passed userLocation if fresh location fails
             if (userLocation) {
               const [lng, lat] = userLocation;
+              setLastFix({ lng, lat, accuracy: null, timestamp: Date.now() });
               setIsOnCampus(checkIfOnCampus(lng, lat));
               reverseGeocode(lng, lat)
                 .then(setCurrentAddress)
@@ -119,6 +133,7 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
         );
       } else if (userLocation) {
         const [lng, lat] = userLocation;
+        setLastFix({ lng, lat, accuracy: null, timestamp: Date.now() });
         setIsOnCampus(checkIfOnCampus(lng, lat));
         reverseGeocode(lng, lat)
           .then(setCurrentAddress)
@@ -135,8 +150,14 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     try {
       let locationInfo = "Location unavailable.";
       
-      if (userLocation) {
-        const [lng, lat] = userLocation;
+      const fix = lastFix
+        ? [lastFix.lng, lastFix.lat] as const
+        : userLocation
+          ? [userLocation[0], userLocation[1]] as const
+          : null;
+
+      if (fix) {
+        const [lng, lat] = fix;
         const address = currentAddress || await reverseGeocode(lng, lat);
         locationInfo = `The caller is located near ${address}.`;
       }
@@ -191,7 +212,7 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
     } finally {
       setIsGeneratingVoice(false);
     }
-  }, [userLocation, currentAddress, reverseGeocode]);
+  }, [userLocation, lastFix, currentAddress, reverseGeocode]);
 
   const handleCall = useCallback((number: string, label: string) => {
     // Open phone dialer with the number
