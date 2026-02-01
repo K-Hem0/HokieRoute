@@ -440,14 +440,14 @@
   .user-location-popup .leaflet-popup-content-wrapper {
     background: hsl(var(--card));
     color: hsl(var(--card-foreground));
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
     border: 1px solid hsl(var(--border));
     padding: 0;
   }
 
   .user-location-popup .leaflet-popup-content {
-    margin: 12px 14px;
+    margin: 8px 10px;
   }
 
   .user-location-popup .leaflet-popup-tip {
@@ -459,8 +459,10 @@
 
   .user-location-popup .leaflet-popup-close-button {
     color: hsl(var(--muted-foreground));
-    font-size: 18px;
-    padding: 6px 8px;
+    font-size: 16px;
+    padding: 4px 6px;
+    top: 2px;
+    right: 2px;
   }
 
   .user-location-popup .leaflet-popup-close-button:hover {

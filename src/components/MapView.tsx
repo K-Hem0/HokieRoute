@@ -138,18 +138,16 @@ const UserLocationMarker = ({
   return (
     <Marker position={position} icon={createUserIcon()}>
       <Popup className="user-location-popup" closeButton={true} autoPan={true}>
-        <div className="min-w-[200px] max-w-[280px]">
+        <div className="min-w-[160px] max-w-[240px]">
           {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground py-1">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-              <span>Finding your location...</span>
-            </div>
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin text-primary" />
+              Locating...
+            </span>
           ) : address ? (
-            <div className="py-0.5">
-              <p className="text-[13px] font-medium text-foreground leading-snug">{address}</p>
-            </div>
+            <p className="text-xs font-medium text-foreground leading-tight">{address}</p>
           ) : (
-            <p className="text-sm text-muted-foreground py-1">Location unavailable</p>
+            <span className="text-xs text-muted-foreground">Location unavailable</span>
           )}
         </div>
       </Popup>
