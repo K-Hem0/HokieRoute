@@ -212,7 +212,8 @@ export const SOSButton = ({ className, userLocation }: SOSButtonProps) => {
   }, []);
 
   // Get recommended emergency contact based on location
-  const primaryContact = isOnCampus ? EMERGENCY_NUMBERS.VT_POLICE : EMERGENCY_NUMBERS.BLACKSBURG_POLICE;
+  // Default to VT Police during loading (per product requirement)
+  const primaryContact = isLoadingAddress ? EMERGENCY_NUMBERS.VT_POLICE : (isOnCampus ? EMERGENCY_NUMBERS.VT_POLICE : EMERGENCY_NUMBERS.BLACKSBURG_POLICE);
 
   return (
     <>
