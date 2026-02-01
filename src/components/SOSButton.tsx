@@ -182,7 +182,7 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
             'Authorization': `Bearer ${SUPABASE_KEY}`,
           },
           body: JSON.stringify({
-            message: `This is an emergency SOS call from HokieRoute app. The caller needs immediate assistance and is requesting help. ${locationInfo} Please respond immediately. I repeat, this is an SOS emergency call from HokieRoute. ${locationInfo}`
+            message: `This is an emergency SOS call from HokieRoute app. This person needs immediate assistance and is requesting help. ${locationInfo} Please respond immediately. I repeat, this is an SOS emergency call from HokieRoute. ${locationInfo}`
           }),
         }
       );
