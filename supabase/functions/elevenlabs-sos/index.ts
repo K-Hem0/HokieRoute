@@ -21,7 +21,7 @@ serve(async (req) => {
     
     // Default emergency message
     const emergencyMessage = message || 
-      "This is an emergency SOS call. The caller needs immediate assistance. " +
+      "This is an emergency SOS call. This person needs immediate assistance. " +
       "Their location is being shared. Please send help immediately. " +
       "I repeat, this is an emergency SOS call requesting immediate assistance.";
 
