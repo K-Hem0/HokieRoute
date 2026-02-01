@@ -209,15 +209,17 @@ export const SOSButton = ({ className, userLocation, userAddress, addressLoading
   }, [userLocation, lastFix, freshAddress, userAddress]);
 
   const handleCall = useCallback((number: string, label: string) => {
-    // Open phone dialer with the number
-    window.location.href = `tel:${number.replace(/-/g, '')}`;
-    toast.info(`Calling ${label}... Voice alert will play on speaker.`);
+    // CRITICAL: Start generating voice FIRST (in user gesture context)
+    // Then open the dialer - use window.open to avoid navigating away
+    generateEmergencyVoice();
     
-    // Auto-generate and play voice message after a short delay
-    // This gives time for the call to connect before the message plays
+    toast.info(`Calling ${label}... Put phone on speaker for voice alert.`);
+    
+    // Use window.open with _self to trigger dialer without fully navigating away
+    // On mobile, this opens the phone app but keeps our page in background
     setTimeout(() => {
-      generateEmergencyVoice();
-    }, 2000);
+      window.open(`tel:${number.replace(/-/g, '')}`, '_self');
+    }, 100);
   }, [generateEmergencyVoice]);
 
   const handleSOSPress = useCallback(() => {
