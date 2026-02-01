@@ -537,15 +537,17 @@ const Map = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-28 left-1/2 -translate-x-1/2 z-10"
+            className="absolute inset-x-0 bottom-0 z-10 p-4 pb-8"
           >
-            <Button
-              className="h-12 px-5 rounded-2xl shadow-lg text-sm font-medium"
-              onClick={handleClearPointToPoint}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Clear route
-            </Button>
+            <div className="mx-auto max-w-md flex justify-center">
+              <Button
+                className="h-12 px-5 rounded-2xl shadow-lg text-sm font-medium"
+                onClick={handleClearPointToPoint}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear route
+              </Button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
