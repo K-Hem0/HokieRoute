@@ -379,10 +379,10 @@ const Map = () => {
         )}
       </AnimatePresence>
 
-      {/* State indicator pill - Layer 7 (z-35) - below search bar */}
+      {/* State indicator pill - Layer 5 (z-25) - below search bar dropdown */}
       <div 
         data-debug="state-indicator"
-        className="absolute left-1/2 -translate-x-1/2 z-[35] top-[calc(var(--safe-zone-top-controls)+4px)]"
+        className="absolute left-1/2 -translate-x-1/2 z-[25] top-[calc(var(--safe-zone-top-controls)+4px)]"
       >
         <AnimatePresence mode="wait">
           <MapStateIndicator key={mapState} state={mapState} />
