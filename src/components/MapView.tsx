@@ -273,20 +273,20 @@ const MapView = ({
 
   const mapCenter: [number, number] = userLatLng || BLACKSBURG_CENTER;
 
-  // Route styling - Night mode gets enhanced glow and higher contrast
+  // Route styling - Softer, less neon colors
   const routeStyle = {
-    color: isDark ? "#C4B5FD" : "#8B5CF6", // Brighter violet in night mode
-    weight: isNavigating ? (isDark ? 10 : 8) : (isDark ? 8 : 6),
+    color: isDark ? "#9F8DC7" : "#7C5CBF", // Muted violet tones
+    weight: isNavigating ? 6 : 4,
     opacity: 1,
     lineCap: "round" as const,
     lineJoin: "round" as const,
   };
 
-  // Route outline - stronger glow effect in night mode
+  // Route outline - subtle glow effect
   const routeOutlineStyle = {
-    color: isDark ? "#8B5CF6" : "#ffffff",
-    weight: isNavigating ? (isDark ? 18 : 14) : (isDark ? 16 : 12),
-    opacity: isDark ? 0.7 : 0.8,
+    color: isDark ? "#6D5A9E" : "#ffffff",
+    weight: isNavigating ? 10 : 8,
+    opacity: isDark ? 0.5 : 0.7,
     lineCap: "round" as const,
     lineJoin: "round" as const,
   };
